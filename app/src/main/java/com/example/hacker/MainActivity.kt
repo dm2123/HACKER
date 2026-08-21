@@ -8,8 +8,8 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.LaunchedEffect
 import androidx.core.content.ContextCompat
 import com.example.hacker.ui.HackerApp
-import com.example.hacker.ui.HackerTheme
 import com.example.hacker.ui.rememberPermissionRequester
+import com.example.hacker.ui.theme.HackerTheme
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {

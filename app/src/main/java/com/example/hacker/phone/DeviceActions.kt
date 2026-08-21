@@ -145,11 +145,7 @@ object DeviceActions {
     }
 
     fun openBluetooth(context: Context) {
-        val intent = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            Intent(Settings.Panel.ACTION_BLUETOOTH)
-        } else {
-            Intent(Settings.ACTION_BLUETOOTH_SETTINGS)
-        }
+        val intent = Intent(Settings.ACTION_BLUETOOTH_SETTINGS)
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         context.startActivity(intent)
     }
