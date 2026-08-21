@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">HACKER</string>
+    <string name="wake_phrase">Hey HACKER</string>
+    <string name="listening">Listening...</string>
+    <string name="speak">Speak</string>
+    <string name="mic_on">Mic on</string>
+    <string name="mic_off">Mic off</string>
+</resources>
