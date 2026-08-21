@@ -3,14 +3,12 @@ name: Build HACKER APK
 on:
   push:
     branches: [main, master]
-  pull_request:
-    branches: [main, master]
-  workflow_dispatch:  # Manual trigger from GitHub UI
+  workflow_dispatch:
 
 jobs:
   build:
     runs-on: ubuntu-latest
-    
+
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
@@ -21,44 +19,15 @@ jobs:
         java-version: '17'
         distribution: 'temurin'
 
-    - name: Set up Android SDK
-      uses: android-actions/setup-android@v3
-      with:
-        api-level: 34
-        build-tools-version: '36.1.0'
-
     - name: Setup Gradle
       uses: gradle/actions/setup-gradle@v3
 
-    - name: Generate Gradle Wrapper
-      run: gradle wrapper --gradle-version 8.5
-
-    - name: Cache Gradle
-      uses: actions/cache@v4
-      with:
-        path: |
-          ~/.gradle/caches
-          ~/.gradle/wrapper
-        key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
-        restore-keys: |
-          ${{ runner.os }}-gradle-
-
     - name: Build Debug APK
-      run: ./gradlew assembleDebug
+      run: gradle assembleDebug --no-daemon
 
     - name: Upload Debug APK
       uses: actions/upload-artifact@v4
       with:
         name: hacker-debug-apk
         path: app/build/outputs/apk/debug/app-debug.apk
-        retention-days: 7
-
-    - name: Build Release APK
-      run: ./gradlew assembleRelease
-
-    - name: Upload Release APK
-      uses: actions/upload-artifact@v4
-      with:
-        name: hacker-release-apk
-        path: app/build/outputs/apk/release/app-release-unsigned.apk
         retention-days: 7
