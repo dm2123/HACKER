@@ -1,8 +1,19 @@
 package com.example.hacker.voice
 
 import android.content.Context
-import android.os.Build
+import com.example.hacker.automation.AutomationEngine
+import com.example.hacker.data.repository.ActivityLogRepository
 import com.example.hacker.phone.DeviceActions
+import com.example.hacker.phonecontrol.AlarmController
+import com.example.hacker.phonecontrol.AppLauncher
+import com.example.hacker.phonecontrol.Contacts
+import com.example.hacker.phonecontrol.Dialer
+import com.example.hacker.phonecontrol.DeviceInfo
+import com.example.hacker.phonecontrol.SettingsLauncher
+import com.example.hacker.phonecontrol.SmsController
+import com.example.hacker.phonecontrol.TimerController
+import com.example.hacker.phonecontrol.TorchController
+import com.example.hacker.phonecontrol.VolumeController
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -14,147 +25,174 @@ object CommandProcessor {
         val lower = text.lowercase()
         if (text.isEmpty()) return "कुछ नहीं सुना, दोबारा बोलो।"
 
-        // TIME
-        if (lower.contains("time") || lower.contains("समय") || lower.contains("टाइम")) {
-            val t = SimpleDateFormat("hh:mm a", Locale.getDefault()).format(Date())
-            return "अभी समय है $t"
-        }
+        var action = "unknown"
 
-        // DATE
-        if (lower.contains("date") || lower.contains("तारीख") || lower.contains("डेट") || lower.contains("आज")) {
-            val d = SimpleDateFormat("dd MMMM yyyy", Locale.getDefault()).format(Date())
-            return "आज की तारीख है $d"
-        }
-
-        // BATTERY
-        if (lower.contains("battery") || lower.contains("बैटरी") || lower.contains("चार्ज")) {
-            val level = DeviceActions.batteryLevel(context)
-            val status = DeviceActions.batteryStatus(context)
-            return "बैटरी $level प्रतिशत है। स्थिति: $status।"
-        }
-
-        // TORCH / FLASHLIGHT
-        if (lower.contains("torch") || lower.contains("flashlight") || lower.contains("टॉर्च") ||
-            lower.contains("लाइट") || lower.contains("फ्लैश")
-        ) {
-            val on = DeviceActions.toggleTorch(context)
-            return if (on) "टॉर्च ऑन कर दिया।" else "टॉर्च बंद कर दिया।"
-        }
-
-        // VOLUME UP
-        if (lower.contains("volume up") || lower.contains("आवाज़ बढ़ा") || lower.contains("आवाज बढ़ा") ||
-            lower.contains("वॉल्यूम अप")
-        ) {
-            DeviceActions.volumeUp(context)
-            return "आवाज़ बढ़ा दी।"
-        }
-
-        // VOLUME DOWN
-        if (lower.contains("volume down") || lower.contains("आवाज़ घटा") || lower.contains("आवाज घटा") ||
-            lower.contains("वॉल्यूम डाउन")
-        ) {
-            DeviceActions.volumeDown(context)
-            return "आवाज़ घटा दी।"
-        }
-
-        // CALL
-        if (lower.startsWith("call") || lower.contains("कॉल") || lower.contains("फोन कर")) {
-            val target = text
-                .substringAfter("call", "")
-                .substringAfter("कॉल", "")
-                .substringAfter("फोन कर", "")
-                .trim()
-            if (target.isEmpty()) return "किसे कॉल करूँ? नाम या नंबर बोलो।"
-            val isDigits = target.all { it.isDigit() || it == '+' || it == '-' || it == ' ' }
-            val number = if (isDigits) target else (DeviceActions.contactNumber(context, target) ?: target)
-            return try {
-                DeviceActions.callNumber(context, number.replace(" ", ""))
-                "कॉल कर रहा हूँ $target"
-            } catch (e: Exception) {
-                DeviceActions.dialNumber(context, number.replace(" ", ""))
-                "डायलर खोल रहा हूँ $target"
+        val response = when {
+            lower.contains("time") || lower.contains("समय") || lower.contains("टाइम") -> {
+                action = "time"
+                "अभी समय है " + SimpleDateFormat("hh:mm a", Locale.getDefault()).format(Date())
             }
-        }
 
-        // SMS
-        if (lower.startsWith("sms") || lower.startsWith("message") || lower.contains("संदेश") ||
-            lower.contains("मैसेज") || lower.contains("msg")
-        ) {
-            DeviceActions.openSmsApp(context)
-            return "मैसेज ऐप खोल रहा हूँ।"
-        }
-
-        // OPEN APP
-        if (lower.startsWith("open ") || lower.contains("खोलो") || lower.contains("ओपन")) {
-            val app = text
-                .substringAfter("open", "")
-                .substringAfter("खोलो", "")
-                .substringAfter("ओपन", "")
-                .trim()
-            if (app.isEmpty()) return "कौन सा ऐप खोलूँ?"
-            return if (DeviceActions.openApp(context, app)) {
-                "$app खोल दिया।"
-            } else {
-                "$app ऐप नहीं मिला।"
+            lower.contains("date") || lower.contains("तारीख") || lower.contains("डेट") || lower.contains("आज") -> {
+                action = "date"
+                "आज की तारीख है " + SimpleDateFormat("dd MMMM yyyy", Locale.getDefault()).format(Date())
             }
-        }
 
-        // WIFI
-        if (lower.contains("wifi") || lower.contains("वाईफाई") || lower.contains("wi-fi")) {
-            DeviceActions.openWifi(context)
-            return "वाईफाई सेटिंग्स खोल रहा हूँ।"
-        }
-
-        // BLUETOOTH
-        if (lower.contains("bluetooth") || lower.contains("ब्लूटूथ")) {
-            DeviceActions.openBluetooth(context)
-            return "ब्लूटूथ सेटिंग्स खोल रहा हूँ।"
-        }
-
-        // YOUTUBE
-        if (lower.contains("youtube") || lower.contains("यूट्यूब")) {
-            val q = text.substringAfter("youtube", "").substringAfter("यूट्यूब", "").trim()
-            if (q.isEmpty()) {
-                DeviceActions.openApp(context, "youtube")
-                return "YouTube खोल रहा हूँ।"
+            lower.contains("battery") || lower.contains("बैटरी") || lower.contains("चार्ज") -> {
+                action = "battery"
+                "बैटरी " + DeviceInfo.batteryLevel(context) + "% है। " + DeviceInfo.batteryStatus(context)
             }
-            DeviceActions.youtubeSearch(context, q)
-            return "YouTube पर खोज रहा हूँ: $q"
+
+            lower.contains("torch") || lower.contains("flashlight") || lower.contains("टॉर्च") ||
+                lower.contains("लाइट") || lower.contains("फ्लैश") -> {
+                action = "torch"
+                TorchController.toggle(context)
+                if (TorchController.isOn(context)) "टॉर्च ऑन कर दिया।" else "टॉर्च बंद कर दिया।"
+            }
+
+            lower.contains("volume up") || lower.contains("आवाज़ बढ़ा") || lower.contains("आवाज बढ़ा") ||
+                lower.contains("वॉल्यूम अप") -> {
+                action = "volume_up"
+                VolumeController.up(context)
+                "आवाज़ बढ़ा दी।"
+            }
+
+            lower.contains("volume down") || lower.contains("आवाज़ घटा") || lower.contains("आवाज घटा") ||
+                lower.contains("वॉल्यूम डाउन") -> {
+                action = "volume_down"
+                VolumeController.down(context)
+                "आवाज़ घटा दी।"
+            }
+
+            lower.startsWith("call") || lower.contains("कॉल") || lower.contains("फोन कर") -> {
+                action = "call"
+                val target = text.substringAfter("call", "").substringAfter("कॉल", "")
+                    .substringAfter("फोन कर", "").trim()
+                if (target.isEmpty()) {
+                    "किसे कॉल करूँ? नाम या नंबर बोलो।"
+                } else {
+                    val num = if (target.all { it.isDigit() || it == '+' || it == '-' || it == ' ' })
+                        target else (Contacts.lookupNumber(context, target) ?: target)
+                    Dialer.call(context, num.replace(" ", ""))
+                }
+            }
+
+            lower.startsWith("sms") || lower.startsWith("message") || lower.contains("संदेश") ||
+                lower.contains("मैसेज") || lower.contains("msg") -> {
+                action = "sms"
+                SmsController.open(context)
+                "मैसेज ऐप खोल रहा हूँ।"
+            }
+
+            lower.startsWith("open ") || lower.contains("खोलो") || lower.contains("ओपन") -> {
+                action = "open_app"
+                val app = text.substringAfter("open", "").substringAfter("खोलो", "")
+                    .substringAfter("ओपन", "").trim()
+                if (app.isEmpty()) "कौन सा ऐप खोलूँ?"
+                else if (AppLauncher.open(context, app)) "$app खोल दिया।"
+                else "$app ऐप नहीं मिला।"
+            }
+
+            lower.contains("wifi") || lower.contains("वाईफाई") || lower.contains("wi-fi") -> {
+                action = "wifi"
+                SettingsLauncher.wifi(context)
+                "वाईफाई सेटिंग्स खोल रहा हूँ।"
+            }
+
+            lower.contains("bluetooth") || lower.contains("ब्लूटूथ") -> {
+                action = "bluetooth"
+                SettingsLauncher.bluetooth(context)
+                "ब्लूटूथ सेटिंग्स खोल रहा हूँ।"
+            }
+
+            lower.contains("youtube") || lower.contains("यूट्यूब") -> {
+                action = "youtube"
+                val q = text.substringAfter("youtube", "").substringAfter("यूट्यूब", "").trim()
+                if (q.isEmpty()) {
+                    AppLauncher.open(context, "youtube")
+                    "YouTube खोल रहा हूँ।"
+                } else {
+                    DeviceActions.youtubeSearch(context, q)
+                    "YouTube पर खोज रहा हूँ: $q"
+                }
+            }
+
+            lower.startsWith("search ") || lower.contains("खोजो") || lower.startsWith("google") ||
+                lower.contains("गूगल") -> {
+                action = "web"
+                val q = text.substringAfter("search", "").substringAfter("खोजो", "")
+                    .substringAfter("google", "").trim()
+                if (q.isEmpty()) "क्या खोजूँ?"
+                else {
+                    DeviceActions.webSearch(context, q)
+                    "गूगल पर खोज रहा हूँ: $q"
+                }
+            }
+
+            lower.contains("alarm") || lower.contains("अलार्म") || lower.contains("अलार्म लगा") -> {
+                action = "alarm"
+                val hr = extractHour(lower)
+                AlarmController.setAlarm(context, hr, 0)
+                "अलार्म सेट कर दिया $hr बजे।"
+            }
+
+            lower.contains("timer") || lower.contains("टाइमर") -> {
+                action = "timer"
+                val mins = extractMinutes(lower)
+                val secs = if (mins > 0) mins * 60 else 60
+                TimerController.start(context, secs)
+                "टाइमर शुरू कर दिया ($secs सेकंड)।"
+            }
+
+            lower.contains("study mode") || lower.contains("स्टडी मोड") -> {
+                action = "automation"
+                AutomationEngine.run(context, "study mode")
+            }
+
+            lower.contains("sleep mode") || lower.contains("स्लीप मोड") -> {
+                action = "automation"
+                AutomationEngine.run(context, "sleep mode")
+            }
+
+            lower.contains("morning routine") || lower.contains("मॉर्निंग रूटीन") -> {
+                action = "automation"
+                AutomationEngine.run(context, "morning routine")
+            }
+
+            lower.contains("work mode") || lower.contains("वर्क मोड") -> {
+                action = "automation"
+                AutomationEngine.run(context, "work mode")
+            }
+
+            lower.contains("hello") || lower.contains("hi ") || lower.contains("नमस्ते") ||
+                lower.contains("नमस्कार") || lower.contains("hey") || lower.contains("हैलो") -> {
+                "नमस्ते! मैं HACKER हूँ — time, battery, torch, call, open, wifi, alarm, study mode आज़माओ।"
+            }
+
+            lower.contains("who are you") || lower.contains("तुम कौन") || lower.contains("तेरा नाम") ||
+                lower.contains("your name") -> "मैं HACKER हूँ, आपका वॉयस असिस्टेंट।"
+
+            lower.contains("thank") || lower.contains("धन्यवाद") || lower.contains("शुक्रिया") ->
+                "आपका स्वागत है!"
+
+            else -> "कमांड समझ नहीं आई: '$text'। कोशिश करो — time, battery, torch, call मम्मी, open whatsapp, wifi, alarm 6, study mode।"
         }
 
-        // WEB SEARCH
-        if (lower.startsWith("search ") || lower.contains("खोजो") || lower.startsWith("google") ||
-            lower.contains("गूगल")
-        ) {
-            val q = text
-                .substringAfter("search", "")
-                .substringAfter("खोजो", "")
-                .substringAfter("google", "")
-                .trim()
-            if (q.isEmpty()) return "क्या खोजूँ?"
-            DeviceActions.webSearch(context, q)
-            return "गूगल पर खोज रहा हूँ: $q"
-        }
+        ActivityLogRepository(context).log(text, action, response)
+        return response
+    }
 
-        // GREETING
-        if (lower.contains("hello") || lower.contains("hi") || lower.contains("हैलो") ||
-            lower.contains("नमस्ते") || lower.contains("नमस्कार") || lower.contains("hey")
-        ) {
-            return "नमस्ते! मैं HACKER हूँ। कमांड दो — time, battery, torch, call, open, wifi, search।"
-        }
+    private fun extractHour(lower: String): Int {
+        val m = Regex("(\\d+)\\s*(am|pm|बजे|बज|am|pm)?").find(lower)
+        var h = m?.groupValues?.getOrNull(1)?.toIntOrNull() ?: 6
+        val suf = m?.groupValues?.getOrNull(2)?.lowercase() ?: ""
+        if (suf == "pm" && h < 12) h += 12
+        if (suf == "am" && h == 12) h = 0
+        return h
+    }
 
-        // WHO ARE YOU
-        if (lower.contains("who are you") || lower.contains("तुम कौन") || lower.contains("तेरा नाम") ||
-            lower.contains("your name")
-        ) {
-            return "मैं HACKER हूँ, आपका वॉयस असिस्टेंट।"
-        }
-
-        // THANKS
-        if (lower.contains("thank") || lower.contains("धन्यवाद") || lower.contains("शुक्रिया")) {
-            return "आपका स्वागत है!"
-        }
-
-        return "कमांड समझ नहीं आई: '$text'। कोशिश करो — time, battery, torch, call मम्मी, open whatsapp, wifi, search cricket।"
+    private fun extractMinutes(lower: String): Int {
+        val m = Regex("(\\d+)\\s*(minute|min|मिनट|minutes)").find(lower)
+        return m?.groupValues?.getOrNull(1)?.toIntOrNull() ?: 1
     }
 }
