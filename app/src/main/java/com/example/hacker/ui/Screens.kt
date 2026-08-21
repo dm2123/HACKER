@@ -334,6 +334,18 @@ fun SettingsScreen() {
         }
 
         Spacer(modifier = Modifier.height(16.dp))
+        Text("Assistant Role", color = MaterialTheme.colorScheme.primary, fontSize = 20.sp)
+        Spacer(modifier = Modifier.height(8.dp))
+        Button(onClick = { requestAssistantRole(ctx) }) {
+            Text("Set HACKER as Assistant (Lock Screen)")
+        }
+        Text(
+            "Lock screen par bhi kaam karega: power button / swipe se HACKER khulega.",
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            fontSize = 12.sp
+        )
+
+        Spacer(modifier = Modifier.height(16.dp))
         Text("Test", color = MaterialTheme.colorScheme.primary, fontSize = 20.sp)
         Spacer(modifier = Modifier.height(8.dp))
         Button(onClick = { speaker.speak("नमस्ते, मैं HACKER हूँ। सब काम चालू है।") }) {
@@ -370,6 +382,17 @@ fun PermissionRow(label: String, granted: Boolean, onRequest: () -> Unit) {
             } else {
                 Text("OK", color = MaterialTheme.colorScheme.primary)
             }
+        }
+    }
+}
+
+fun requestAssistantRole(context: Context) {
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+        val rm = context.getSystemService(Context.ROLE_SERVICE) as android.app.role.RoleManager
+        if (!rm.isRoleHeld(android.app.role.RoleManager.ROLE_ASSISTANT)) {
+            val intent = rm.createRequestRoleIntent(android.app.role.RoleManager.ROLE_ASSISTANT)
+            intent.addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
+            context.startActivity(intent)
         }
     }
 }

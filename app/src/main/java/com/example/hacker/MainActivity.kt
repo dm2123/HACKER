@@ -1,10 +1,12 @@
 package com.example.hacker
 
 import android.Manifest
+import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Bundle
+import android.view.WindowManager
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.LaunchedEffect
 import androidx.core.content.ContextCompat
 import com.example.hacker.ui.HackerApp
@@ -14,6 +16,14 @@ import com.example.hacker.ui.theme.HackerTheme
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        // Lock-screen support (spec §16)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1) {
+            setShowWhenLocked(true)
+            setTurnScreenOn(true)
+        }
+        window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+
         setContent {
             HackerTheme {
                 val requester = rememberPermissionRequester()
@@ -25,7 +35,7 @@ class MainActivity : ComponentActivity() {
                         Manifest.permission.READ_CONTACTS
                     ).filter {
                         ContextCompat.checkSelfPermission(this@MainActivity, it) !=
-                            android.content.pm.PackageManager.PERMISSION_GRANTED
+                            PackageManager.PERMISSION_GRANTED
                     }.toTypedArray()
                     if (need.isNotEmpty()) requester(need)
                 }
