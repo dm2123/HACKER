@@ -35,6 +35,7 @@ import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Sms
 import androidx.compose.material.icons.filled.Wifi
 import androidx.compose.material.icons.automirrored.filled.Send
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Psychology
 import androidx.compose.material.icons.filled.Build
@@ -408,7 +409,7 @@ private fun SettingsNav(title: String, desc: String, icon: androidx.compose.ui.g
         Row(Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
             Icon(icon, null, tint = MaterialTheme.colorScheme.primary); Spacer(Modifier.width(10.dp))
             Column(Modifier.weight(1f)) { Text(title, color = MaterialTheme.colorScheme.onSurface, fontSize = 14.sp); Text(desc, color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 11.sp) }
-            Icon(androidx.compose.material.icons.automirrored.filled.ArrowForward, null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
+            Icon(ArrowForward, null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
         }
     }
 }

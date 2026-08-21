@@ -17,6 +17,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.unit.dp
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
@@ -74,61 +75,51 @@ fun HackerApp() {
 @Composable
 private fun MainScaffold() {
     var selected by remember { mutableStateOf(Tab.Home) }
-    val ctx = LocalContext.current
-    val navInner = rememberNavController()
-    // We use inner nav for tabs + delegate to outer for sub-screens via LocalContext hack: just use simple when and a global nav
-    // For simplicity, sub-screens are opened via separate NavHost above; here we handle tab content + settings deep links via context start
-    // Instead, expose a simple callback: SettingsScreen will use LocalNav
-    CompositionLocalProvider(LocalNav provides rememberNavController()) {
-        // Actually we reuse outer nav by passing via static — simpler: keep Scaffold and handle sub-nav with a state
-        var subRoute by remember { mutableStateOf<String?>(null) }
-        if (subRoute != null) {
-            Box(Modifier.fillMaxSize()) {
-                when (subRoute) {
-                    "history" -> HistoryScreen()
-                    "memory" -> MemoryScreen()
-                    "tools_extra" -> ToolsScreen(onNavigate = { subRoute = it })
-                    "notifications" -> NotificationsScreen()
-                    "automation" -> AutomationScreen()
-                    "activity_logs" -> ActivityLogsScreen()
-                    "privacy" -> PrivacyScreen()
-                    "security" -> SecurityScreen()
-                    "voice_settings" -> VoiceSettingsScreen()
-                    "ai_settings" -> AiSettingsScreen()
-                    "permission_manager" -> PermissionManagerScreen()
-                    "language" -> LanguageScreen()
-                    "appearance" -> AppearanceScreen()
-                    "about" -> AboutScreen()
-                    else -> {}
-                }
-                androidx.compose.material3.Button(onClick = { subRoute = null }, modifier = Modifier.padding(12.dp)) { Text("Back") }
+    var subRoute by remember { mutableStateOf<String?>(null) }
+    if (subRoute != null) {
+        Box(Modifier.fillMaxSize()) {
+            when (subRoute) {
+                "history" -> HistoryScreen()
+                "memory" -> MemoryScreen()
+                "tools_extra" -> ToolsScreen(onNavigate = { subRoute = it })
+                "notifications" -> NotificationsScreen()
+                "automation" -> AutomationScreen()
+                "activity_logs" -> ActivityLogsScreen()
+                "privacy" -> PrivacyScreen()
+                "security" -> SecurityScreen()
+                "voice_settings" -> VoiceSettingsScreen()
+                "ai_settings" -> AiSettingsScreen()
+                "permission_manager" -> PermissionManagerScreen()
+                "language" -> LanguageScreen()
+                "appearance" -> AppearanceScreen()
+                "about" -> AboutScreen()
+                else -> {}
             }
-            return@CompositionLocalProvider
+            androidx.compose.material3.Button(onClick = { subRoute = null }, modifier = Modifier.padding(12.dp)) { Text("Back") }
         }
-        Scaffold(
-            bottomBar = {
-                NavigationBar {
-                    Tab.values().forEach { tab ->
-                        NavigationBarItem(
-                            selected = selected == tab,
-                            onClick = { selected = tab },
-                            icon = { Icon(tab.icon, contentDescription = tab.label) },
-                            label = { Text(tab.label) }
-                        )
-                    }
+        return
+    }
+    Scaffold(
+        bottomBar = {
+            NavigationBar {
+                Tab.values().forEach { tab ->
+                    NavigationBarItem(
+                        selected = selected == tab,
+                        onClick = { selected = tab },
+                        icon = { Icon(tab.icon, contentDescription = tab.label) },
+                        label = { Text(tab.label) }
+                    )
                 }
             }
-        ) { padding ->
-            Box(Modifier.fillMaxSize().padding(padding)) {
-                when (selected) {
-                    Tab.Home -> HomeScreen(onNavigate = { subRoute = it })
-                    Tab.Chat -> ChatScreen()
-                    Tab.Voice -> VoiceScreen()
-                    Tab.Settings -> SettingsScreen(onNavigate = { subRoute = it })
-                }
+        }
+    ) { padding ->
+        Box(Modifier.fillMaxSize().padding(padding)) {
+            when (selected) {
+                Tab.Home -> HomeScreen(onNavigate = { subRoute = it })
+                Tab.Chat -> ChatScreen()
+                Tab.Voice -> VoiceScreen()
+                Tab.Settings -> SettingsScreen(onNavigate = { subRoute = it })
             }
         }
     }
 }
-
-val LocalNav = compositionLocalOf { rememberNavController() }
