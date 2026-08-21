@@ -22,5 +22,5 @@ object CapabilityManager {
     }
 
     fun supportsVoiceInteraction(context: Context): Boolean =
-        context.packageManager.hasSystemFeature(PackageManager.FEATURE_AUDIO_RECOGNITION)
+        context.packageManager.hasSystemFeature("android.software.audio_recognition")
 }
