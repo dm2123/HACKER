@@ -14,6 +14,9 @@ import com.example.hacker.phonecontrol.SmsController
 import com.example.hacker.phonecontrol.TimerController
 import com.example.hacker.phonecontrol.TorchController
 import com.example.hacker.phonecontrol.VolumeController
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -175,11 +178,89 @@ object CommandProcessor {
             lower.contains("thank") || lower.contains("धन्यवाद") || lower.contains("शुक्रिया") ->
                 "आपका स्वागत है!"
 
-            else -> "कमांड समझ नहीं आई: '$text'। कोशिश करो — time, battery, torch, call मम्मी, open whatsapp, wifi, alarm 6, study mode।"
+            lower.contains("notification") || lower.contains("नोटिफिकेशन") || lower.contains("नोटिस") -> {
+                action = "notifications"
+                val repo = com.example.hacker.data.repository.NotificationRepository(context)
+                // quick sync read last 3 (blocking via runBlocking not allowed) -> do async? For now return guidance
+                // Also handle "clear notifications"
+                if (lower.contains("clear") || lower.contains("साफ") || lower.contains("हटा")) {
+                    kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.IO).launch { repo.clear() }
+                    "Notifications साफ कर दीं।"
+                } else "Notifications देखने के लिए Notifications screen खोलो — या कहो 'clear notifications'।"
+            }
+
+            lower.contains("remember") || lower.contains("yaad rakh") || lower.contains("याद रख") -> {
+                action = "memory_save"
+                val what = text.substringAfter("remember", "").substringAfter("yaad rakh", "").substringAfter("याद रख", "").trim().ifEmpty { text }
+                if (what.length < 3) "क्या याद रखूँ?"
+                else {
+                    kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.IO).launch { com.example.hacker.data.repository.MemoryRepository(context).add("voice", what) }
+                    "याद रख लिया: $what"
+                }
+            }
+
+            lower.contains("brightness") || lower.contains("ब्राइटनेस") || lower.contains("चमक") -> {
+                action = "brightness"
+                DeviceActions.openApp(context, "settings")
+                "Brightness settings खोल रहा हूँ।"
+            }
+
+            lower.contains("dnd") || lower.contains("do not disturb") || lower.contains("डिस्टर्ब") -> {
+                action = "dnd"
+                DeviceActions.openApp(context, "settings")
+                "Do Not Disturb settings खोल रहा हूँ।"
+            }
+
+            lower.contains("screenshot") || lower.contains("स्क्रीनशॉट") -> {
+                action = "screenshot"
+                "Screenshot के लिए power + volume down दबाओ — या Tools में जाओ।"
+            }
+
+            lower.contains("map") || lower.contains("maps") || lower.contains("नक्शा") || lower.contains("लोकेशन") -> {
+                action = "maps"
+                val q = text.substringAfter("map", "").substringAfter("नक्शा", "").trim()
+                if (q.isNotBlank()) DeviceActions.webSearch(context, "$q maps")
+                else DeviceActions.openApp(context, "maps")
+                if (q.isNotBlank()) "Maps पर $q खोज रहा हूँ।" else "Maps खोल रहा हूँ।"
+            }
+
+            else -> {
+                // fuzzy app open: if text is single word maybe app name
+                val fuzzy = fuzzyAppMatch(context, lower)
+                if (fuzzy != null) {
+                    action = "open_app_fuzzy"
+                    com.example.hacker.phonecontrol.AppLauncher.open(context, fuzzy)
+                    "$fuzzy खोल रहा हूँ (fuzzy match) — अगली बार 'open $fuzzy' बोलो।"
+                } else "कमांड समझ नहीं आई: '$text'। कोशिश करो — time, battery, torch, call मम्मी, open whatsapp, wifi, alarm 6, study mode, notifications batao, yaad rakh <baat>।"
+            }
         }
 
         ActivityLogRepository(context).log(text, action, response)
         return response
+    }
+
+    private fun fuzzyAppMatch(context: Context, lower: String): String? {
+        // simple Levenshtein against installed app labels (first 30)
+        return try {
+            val pm = context.packageManager
+            val apps = pm.getInstalledApplications(0).take(80).mapNotNull { try { pm.getApplicationLabel(it).toString().lowercase() } catch(_:Exception){null} }
+            val query = lower.trim().take(20)
+            if (query.length < 3) return null
+            var best: String? = null; var bestDist = 3
+            for (app in apps) {
+                if (app.contains(query) || query.contains(app)) return app
+                val d = levenshtein(query, app.take(query.length+2))
+                if (d < bestDist) { bestDist = d; best = app }
+            }
+            best
+        } catch(_:Exception){ null }
+    }
+    private fun levenshtein(a: String, b: String): Int {
+        val dp = Array(a.length+1){ IntArray(b.length+1) }
+        for (i in 0..a.length) dp[i][0]=i
+        for (j in 0..b.length) dp[0][j]=j
+        for (i in 1..a.length) for (j in 1..b.length) dp[i][j]= if(a[i-1]==b[j-1]) dp[i-1][j-1] else 1+minOf(dp[i-1][j], dp[i][j-1], dp[i-1][j-1])
+        return dp[a.length][b.length]
     }
 
     private fun extractHour(lower: String): Int {

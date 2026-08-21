@@ -21,9 +21,19 @@ class HackerVoiceInteractionService : VoiceInteractionService() {
 /**
  * Notification Listener (spec section 10).
  * Active only after user explicitly grants access in Settings.
+ * Persists notifications locally (spec 10: local-first).
  */
 class HackerNotificationListenerService : NotificationListenerService() {
-    override fun onNotificationPosted(sbn: StatusBarNotification?) {}
+    override fun onNotificationPosted(sbn: StatusBarNotification?) {
+        if (sbn == null) return
+        if (sbn.packageName == packageName) return
+        val extras = sbn.notification.extras
+        val title = extras.getCharSequence(android.app.Notification.EXTRA_TITLE)?.toString() ?: ""
+        val text = extras.getCharSequence(android.app.Notification.EXTRA_TEXT)?.toString() ?: extras.getCharSequence(android.app.Notification.EXTRA_BIG_TEXT)?.toString() ?: ""
+        if (title.isBlank() && text.isBlank()) return
+        val label = try { packageManager.getApplicationLabel(packageManager.getApplicationInfo(sbn.packageName, 0)).toString() } catch(_:Exception){ sbn.packageName }
+        com.example.hacker.data.repository.NotificationRepository.save(this, sbn.packageName, label, title, text)
+    }
     override fun onNotificationRemoved(sbn: StatusBarNotification?) {}
 }
 

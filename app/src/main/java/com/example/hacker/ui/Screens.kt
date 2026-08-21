@@ -32,9 +32,15 @@ import androidx.compose.material.icons.filled.FlashOn
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Mic
 import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.material.icons.filled.Send
 import androidx.compose.material.icons.filled.Sms
 import androidx.compose.material.icons.filled.Wifi
+import androidx.compose.material.icons.automirrored.filled.Send
+import androidx.compose.material.icons.filled.History
+import androidx.compose.material.icons.filled.Psychology
+import androidx.compose.material.icons.filled.Build
+import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material.icons.filled.Security
+import androidx.compose.material.icons.filled.PrivacyTip
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -90,15 +96,17 @@ fun greeting(): String {
 }
 
 @Composable
-fun HomeScreen() {
+fun HomeScreen(onNavigate: (String)->Unit = {}) {
     val ctx = LocalContext.current
     var torchOn by remember { mutableStateOf(DeviceActions.isTorchOn()) }
     var battery by remember { mutableStateOf(DeviceActions.batteryLevel(ctx)) }
 
+    androidx.compose.foundation.rememberScrollState().let { }
     Column(
         modifier = Modifier
             .fillMaxSize()
             .padding(16.dp)
+            .let { m -> m }
     ) {
         Text(
             text = "▌ HACKER",
@@ -155,6 +163,42 @@ fun HomeScreen() {
                 DeviceActions.openApp(ctx, "youtube")
             }
         }
+        Spacer(modifier = Modifier.height(16.dp))
+        androidx.compose.foundation.layout.Column {
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                androidx.compose.foundation.layout.Box(Modifier.weight(1f)) {
+                    SmallNav(icon = Icons.Filled.History, label = "History", onClick = { onNavigate("history") })
+                }
+                androidx.compose.foundation.layout.Box(Modifier.weight(1f)) {
+                    SmallNav(icon = Icons.Filled.Psychology, label = "Memory", onClick = { onNavigate("memory") })
+                }
+                androidx.compose.foundation.layout.Box(Modifier.weight(1f)) {
+                    SmallNav(icon = Icons.Filled.Build, label = "Tools", onClick = { onNavigate("tools_extra") })
+                }
+            }
+            Spacer(Modifier.height(8.dp))
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                androidx.compose.foundation.layout.Box(Modifier.weight(1f)) {
+                    SmallNav(icon = Icons.Filled.Notifications, label = "Notifs", onClick = { onNavigate("notifications") })
+                }
+                androidx.compose.foundation.layout.Box(Modifier.weight(1f)) {
+                    SmallNav(icon = Icons.Filled.Security, label = "Security", onClick = { onNavigate("security") })
+                }
+                androidx.compose.foundation.layout.Box(Modifier.weight(1f)) {
+                    SmallNav(icon = Icons.Filled.PrivacyTip, label = "Privacy", onClick = { onNavigate("privacy") })
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun SmallNav(icon: androidx.compose.ui.graphics.vector.ImageVector, label: String, onClick: ()->Unit) {
+    Card(onClick = onClick, colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant), modifier = Modifier.fillMaxWidth()) {
+        Column(Modifier.padding(12.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+            Icon(icon, null, tint = MaterialTheme.colorScheme.primary)
+            Text(label, fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurface)
+        }
     }
 }
 
@@ -210,7 +254,7 @@ fun ChatScreen() {
                 Conversation.add(reply, false)
                 speaker.speak(reply)
             }) {
-                Icon(Icons.Filled.Send, contentDescription = "Send", tint = MaterialTheme.colorScheme.primary)
+                Icon(Icons.AutoMirrored.Filled.Send, contentDescription = "Send", tint = MaterialTheme.colorScheme.primary)
             }
         }
     }
@@ -309,7 +353,7 @@ fun VoiceScreen() {
 }
 
 @Composable
-fun SettingsScreen() {
+fun SettingsScreen(onNavigate: (String)->Unit = {}) {
     val ctx = LocalContext.current
     val speaker = rememberSpeaker()
     val requester = rememberPermissionRequester()
@@ -317,47 +361,55 @@ fun SettingsScreen() {
     fun granted(perm: String): Boolean =
         ContextCompat.checkSelfPermission(ctx, perm) == PackageManager.PERMISSION_GRANTED
 
-    Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
-        Text("Permissions", color = MaterialTheme.colorScheme.primary, fontSize = 20.sp)
-        Spacer(modifier = Modifier.height(8.dp))
+    androidx.compose.foundation.lazy.LazyColumn(modifier = Modifier.fillMaxSize().padding(16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        item {
+            Text("Assistant", color = MaterialTheme.colorScheme.primary, fontSize = 20.sp)
+            Spacer(modifier = Modifier.height(8.dp))
+            Button(onClick = { requestAssistantRole(ctx) }, modifier = Modifier.fillMaxWidth()) {
+                Text("Set HACKER as Assistant (Lock Screen)")
+            }
+            Text("Lock screen par bhi — power button / swipe se HACKER (spec 16).", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 11.sp)
+            Spacer(Modifier.height(12.dp))
+            Text("Quick Settings", color = MaterialTheme.colorScheme.primary, fontSize = 16.sp)
+        }
+        item { SettingsNav("History", "Conversations & logs", Icons.Filled.History) { onNavigate("history") } }
+        item { SettingsNav("Memory", "View / edit / delete", Icons.Filled.Psychology) { onNavigate("memory") } }
+        item { SettingsNav("Tools", "Phone control", Icons.Filled.Build) { onNavigate("tools_extra") } }
+        item { SettingsNav("Notifications", "Notification reader", Icons.Filled.Notifications) { onNavigate("notifications") } }
+        item { SettingsNav("Automations", "Study / Sleep / Work flows", Icons.Filled.BatteryStd) { onNavigate("automation") } }
+        item { SettingsNav("Activity Logs", "All actions", Icons.Filled.Info) { onNavigate("activity_logs") } }
+        item { SettingsNav("Security", "PIN & levels (spec 15)", Icons.Filled.Security) { onNavigate("security") } }
+        item { SettingsNav("Privacy", "All toggles (spec 17)", Icons.Filled.PrivacyTip) { onNavigate("privacy") } }
+        item { SettingsNav("Voice Settings", "Pitch / speed / wake phrase", Icons.Filled.Mic) { onNavigate("voice_settings") } }
+        item { SettingsNav("AI Settings", "Endpoint / key / model", Icons.Filled.Info) { onNavigate("ai_settings") } }
+        item { SettingsNav("Permission Manager", "All perms status", Icons.Filled.CheckCircle) { onNavigate("permission_manager") } }
+        item { SettingsNav("Language", "Hindi / English / Hinglish", Icons.Filled.Info) { onNavigate("language") } }
+        item { SettingsNav("Appearance", "Hacker theme", Icons.Filled.Info) { onNavigate("appearance") } }
+        item { SettingsNav("About", "Version & spec", Icons.Filled.Info) { onNavigate("about") } }
+        item {
+            Spacer(Modifier.height(12.dp))
+            Text("Permissions", color = MaterialTheme.colorScheme.primary, fontSize = 16.sp)
+            Spacer(Modifier.height(4.dp))
+            PermissionRow("Microphone (RECORD_AUDIO)", granted(Manifest.permission.RECORD_AUDIO)) { requester(arrayOf(Manifest.permission.RECORD_AUDIO)) }
+            PermissionRow("Phone (CALL_PHONE)", granted(Manifest.permission.CALL_PHONE)) { requester(arrayOf(Manifest.permission.CALL_PHONE)) }
+            PermissionRow("SMS (SEND_SMS)", granted(Manifest.permission.SEND_SMS)) { requester(arrayOf(Manifest.permission.SEND_SMS)) }
+            PermissionRow("Contacts (READ_CONTACTS)", granted(Manifest.permission.READ_CONTACTS)) { requester(arrayOf(Manifest.permission.READ_CONTACTS)) }
+            Spacer(Modifier.height(12.dp))
+            Button(onClick = { speaker.speak("नमस्ते, मैं HACKER हूँ। सब काम चालू है।") }, modifier = Modifier.fillMaxWidth()) { Text("Test Voice") }
+            Spacer(Modifier.height(8.dp))
+            Text("HACKER v1.0 • Commands: time, date, battery, torch, call <name>, open <app>, wifi, bluetooth, youtube <q>, search <q>, volume, alarm, timer, study mode, notifications batao", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 11.sp)
+        }
+    }
+}
 
-        PermissionRow("Microphone (RECORD_AUDIO)", granted(Manifest.permission.RECORD_AUDIO)) {
-            requester(arrayOf(Manifest.permission.RECORD_AUDIO))
+@Composable
+private fun SettingsNav(title: String, desc: String, icon: androidx.compose.ui.graphics.vector.ImageVector, onClick: ()->Unit) {
+    Card(onClick = onClick, colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant), modifier = Modifier.fillMaxWidth()) {
+        Row(Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
+            Icon(icon, null, tint = MaterialTheme.colorScheme.primary); Spacer(Modifier.width(10.dp))
+            Column(Modifier.weight(1f)) { Text(title, color = MaterialTheme.colorScheme.onSurface, fontSize = 14.sp); Text(desc, color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 11.sp) }
+            Icon(androidx.compose.material.icons.automirrored.filled.ArrowForward, null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
         }
-        PermissionRow("Phone (CALL_PHONE)", granted(Manifest.permission.CALL_PHONE)) {
-            requester(arrayOf(Manifest.permission.CALL_PHONE))
-        }
-        PermissionRow("SMS (SEND_SMS)", granted(Manifest.permission.SEND_SMS)) {
-            requester(arrayOf(Manifest.permission.SEND_SMS))
-        }
-        PermissionRow("Contacts (READ_CONTACTS)", granted(Manifest.permission.READ_CONTACTS)) {
-            requester(arrayOf(Manifest.permission.READ_CONTACTS))
-        }
-
-        Spacer(modifier = Modifier.height(16.dp))
-        Text("Assistant Role", color = MaterialTheme.colorScheme.primary, fontSize = 20.sp)
-        Spacer(modifier = Modifier.height(8.dp))
-        Button(onClick = { requestAssistantRole(ctx) }) {
-            Text("Set HACKER as Assistant (Lock Screen)")
-        }
-        Text(
-            "Lock screen par bhi kaam karega: power button / swipe se HACKER khulega.",
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            fontSize = 12.sp
-        )
-
-        Spacer(modifier = Modifier.height(16.dp))
-        Text("Test", color = MaterialTheme.colorScheme.primary, fontSize = 20.sp)
-        Spacer(modifier = Modifier.height(8.dp))
-        Button(onClick = { speaker.speak("नमस्ते, मैं HACKER हूँ। सब काम चालू है।") }) {
-            Text("Test Voice")
-        }
-        Spacer(modifier = Modifier.height(16.dp))
-        Text(
-            "HACKER v1.0 — Voice Assistant\nCommands: time, date, battery, torch, call <name/number>, open <app>, wifi, bluetooth, youtube <q>, search <q>, volume up/down",
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            fontSize = 13.sp
-        )
     }
 }
 

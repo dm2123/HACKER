@@ -12,9 +12,10 @@ import androidx.room.RoomDatabase
         MessageEntity::class,
         MemoryEntity::class,
         AutomationEntity::class,
-        ActivityLogEntity::class
+        ActivityLogEntity::class,
+        NotificationEntity::class
     ],
-    version = 1,
+    version = 2,
     exportSchema = false
 )
 abstract class HackerDatabase : RoomDatabase() {
@@ -23,6 +24,7 @@ abstract class HackerDatabase : RoomDatabase() {
     abstract fun messageDao(): MessageDao
     abstract fun memoryDao(): MemoryDao
     abstract fun automationDao(): AutomationDao
+    abstract fun notificationDao(): NotificationDao
 
     companion object {
         @Volatile

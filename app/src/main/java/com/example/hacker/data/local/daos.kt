@@ -85,3 +85,21 @@ interface AutomationDao {
     @Delete
     suspend fun delete(a: AutomationEntity)
 }
+
+@Dao
+interface NotificationDao {
+    @Insert
+    suspend fun insert(n: NotificationEntity)
+
+    @Query("SELECT * FROM notifications ORDER BY postedAt DESC LIMIT :limit")
+    fun observeRecent(limit: Int = 100): Flow<List<NotificationEntity>>
+
+    @Query("SELECT * FROM notifications ORDER BY postedAt DESC LIMIT :limit")
+    suspend fun getRecent(limit: Int = 20): List<NotificationEntity>
+
+    @Query("UPDATE notifications SET readAloud = 1")
+    suspend fun markAllRead()
+
+    @Query("DELETE FROM notifications")
+    suspend fun clear()
+}

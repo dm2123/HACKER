@@ -58,3 +58,14 @@ data class ActivityLogEntity(
     val confirmationRequired: Boolean = false,
     val timestamp: Long = System.currentTimeMillis()
 )
+
+@Entity(tableName = "notifications")
+data class NotificationEntity(
+    @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    val packageName: String,
+    val appLabel: String,
+    val title: String,
+    val text: String,
+    val postedAt: Long = System.currentTimeMillis(),
+    val readAloud: Boolean = false
+)

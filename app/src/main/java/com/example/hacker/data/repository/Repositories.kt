@@ -64,3 +64,35 @@ class AutomationRepository(context: Context) {
 
     suspend fun delete(a: AutomationEntity) = withContext(Dispatchers.IO) { dao.delete(a) }
 }
+
+class NotificationRepository(context: Context) {
+    private val dao = HackerDatabase.getDatabase(context).notificationDao()
+
+    fun observeRecent(limit: Int = 100): Flow<List<com.example.hacker.data.local.NotificationEntity>> =
+        dao.observeRecent(limit)
+
+    suspend fun getRecent(limit: Int = 20): List<com.example.hacker.data.local.NotificationEntity> =
+        withContext(Dispatchers.IO) { dao.getRecent(limit) }
+
+    suspend fun markAllRead() = withContext(Dispatchers.IO) { dao.markAllRead() }
+
+    suspend fun clear() = withContext(Dispatchers.IO) { dao.clear() }
+
+    companion object {
+        fun save(context: Context, packageName: String, appLabel: String, title: String, text: String) {
+            CoroutineScope(Dispatchers.IO).launch {
+                try {
+                    HackerDatabase.getDatabase(context).notificationDao().insert(
+                        com.example.hacker.data.local.NotificationEntity(
+                            packageName = packageName,
+                            appLabel = appLabel,
+                            title = title,
+                            text = text
+                        )
+                    )
+                } catch (_: Exception) {
+                }
+            }
+        }
+    }
+}
