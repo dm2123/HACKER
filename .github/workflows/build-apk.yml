@@ -34,12 +34,17 @@ jobs:
     - name: Build Debug APK
       run: gradle assembleDebug --no-daemon --stacktrace 2>&1 | tee build.log
 
-    - name: Show last 80 log lines
+    - name: Show build errors
       if: always()
       run: |
-        echo "### Build log (tail)" >> $GITHUB_STEP_SUMMARY
+        echo "### Build errors" >> $GITHUB_STEP_SUMMARY
         echo '```' >> $GITHUB_STEP_SUMMARY
-        tail -80 build.log >> $GITHUB_STEP_SUMMARY
+        grep -E "e: |\.kt:[0-9]+:|error:|FAILURE|What went wrong|Exception" build.log | head -80 >> $GITHUB_STEP_SUMMARY
+        echo '```' >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### Full log" >> $GITHUB_STEP_SUMMARY
+        echo '```' >> $GITHUB_STEP_SUMMARY
+        cat build.log >> $GITHUB_STEP_SUMMARY
         echo '```' >> $GITHUB_STEP_SUMMARY
 
     - name: Upload build log
