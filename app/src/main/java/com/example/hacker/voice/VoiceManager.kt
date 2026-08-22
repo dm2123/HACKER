@@ -35,7 +35,7 @@ class VoiceManager(private val context: Context) {
             if (status == TextToSpeech.SUCCESS) {
                 // Set voice properties
                 textToSpeech?.language = Locale("hi", "IN") // Default Hindi
-                textToSpeech?.pitch = 1.0f
+                textToSpeech?.setPitch(1.0f)
                 textToSpeech?.setSpeechRate(0.9f)
                 Log.d("VOICE", "TTS initialized — Hindi voice ready")
             }
@@ -135,7 +135,7 @@ class VoiceManager(private val context: Context) {
      * Set voice properties
      */
     fun setVoiceProperties(pitch: Float = 1.0f, speed: Float = 0.9f) {
-        textToSpeech?.pitch = pitch
+        textToSpeech?.setPitch(pitch)
         textToSpeech?.setSpeechRate(speed)
         Log.d("VOICE", "Voice set — pitch: $pitch, speed: $speed")
     }

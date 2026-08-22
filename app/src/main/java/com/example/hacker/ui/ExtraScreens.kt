@@ -494,59 +494,45 @@ fun PrivacyScreen() {
         Text("Like Siri on iPhone, but for Android — within legitimate Android boundaries (spec 32).", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 12.sp)
         Spacer(Modifier.height(16.dp))
         Text("Definition of Done (spec 31): voice reliable, intent routing stable, permissions explained, memory user-controlled, offline fallback, no PIN bypass.", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 11.sp)
-    }
 }
+}
+
+// ---------- Tools (spec 8) ----------
 @Composable
-fun VoiceEnrollmentScreen() {
+fun ToolsScreen(onNavigate: (String) -> Unit = {}) {
     val ctx = LocalContext.current
-    val scope = rememberCoroutineScope()
-    val identity = com.example.hacker.core.voice.VoiceIdentityManager()
-    var enrolled by remember { mutableStateOf(false) }
-    var status by remember { mutableStateOf("") }
-    LaunchedEffect(Unit) {
-        enrolled = identity.getStoredProfile()?.isEnrolled == true
-    }
-    Column(Modifier.fillMaxSize().padding(16.dp).verticalScroll(rememberScrollState())) {
-        Text("Voice Enrollment", color = MaterialTheme.colorScheme.primary, fontSize = 20.sp)
-        Spacer(Modifier.height(8.dp))
-        Text("Say 'Hey HACKER' 3 times so only you can wake HACKER.", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 12.sp)
+    Column(Modifier.fillMaxSize().padding(16.dp)) {
+        Text("Tools", color = MaterialTheme.colorScheme.primary, fontSize = 20.sp)
         Spacer(Modifier.height(12.dp))
-        if (enrolled) {
-            Card(modifier = Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = Color(0xFF1B5E20))) {
-                Row(Modifier.padding(12.dp)) {
-                    Icon(Icons.Filled.CheckCircle, contentDescription = null, tint = Color(0xFF00E676))
-                    Spacer(Modifier.width(8.dp))
-                    Text("Enrolled ? � only your 'Hey HACKER' works", color = Color.White, fontSize = 14.sp)
+        Text("All phone control tools (spec 8)", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 12.sp)
+        Spacer(Modifier.height(12.dp))
+        val tools = listOf(
+            Triple(Icons.Filled.Apps, "App Launcher", "open youtube / camera kholo") to { DeviceActions.openApp(ctx, "settings") },
+            Triple(Icons.Filled.FlashOn, "Torch", "flashlight on karo") to { DeviceActions.toggleTorch(ctx) },
+            Triple(Icons.Filled.VolumeUp, "Volume", "volume kam karo") to { DeviceActions.openApp(ctx, "settings") },
+            Triple(Icons.Filled.Alarm, "Alarm", "kal 6 baje alarm") to { com.example.hacker.phonecontrol.AlarmController.setAlarm(ctx, 6, 0) },
+            Triple(Icons.Filled.Timer, "Timer", "10 minute timer") to { com.example.hacker.phonecontrol.TimerController.start(ctx, 600) },
+            Triple(Icons.Filled.Wifi, "WiFi", "wifi kholo") to { DeviceActions.openWifi(ctx) },
+            Triple(Icons.Filled.Bluetooth, "Bluetooth", "bluetooth kholo") to { DeviceActions.openBluetooth(ctx) },
+        )
+        tools.chunked(2).forEach { row ->
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                row.forEach { (info, action) ->
+                    val (icon, title, hint) = info
+                    Card(Modifier.weight(1f).height(92.dp).clickable { action() }, colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)) {
+                        Column(Modifier.fillMaxSize().padding(10.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
+                            Icon(icon, null, tint = MaterialTheme.colorScheme.primary); Text(title, fontSize = 12.sp); Text(hint, fontSize = 9.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
+                    }
                 }
+                if (row.size==1) Spacer(Modifier.weight(1f))
             }
             Spacer(Modifier.height(8.dp))
-            Button(onClick = { scope.launch { identity.clearProfile(); enrolled = false; status = "Cleared" } }, modifier = Modifier.fillMaxWidth()) {
-                Text("Clear Profile")
-            }
-        } else {
-            var phrase1 by remember { mutableStateOf("") }
-            var phrase2 by remember { mutableStateOf("") }
-            var phrase3 by remember { mutableStateOf("") }
-            Column(Modifier.fillMaxWidth()) {
-                OutlinedTextField(value = phrase1, onValueChange = { phrase1 = it }, label = { Text("Say: Hey HACKER") }, modifier = Modifier.fillMaxWidth())
-                Spacer(Modifier.height(8.dp))
-                OutlinedTextField(value = phrase2, onValueChange = { phrase2 = it }, label = { Text("Say: Hey HACKER") }, modifier = Modifier.fillMaxWidth())
-                Spacer(Modifier.height(8.dp))
-                OutlinedTextField(value = phrase3, onValueChange = { phrase3 = it }, label = { Text("Say: Hey HACKER") }, modifier = Modifier.fillMaxWidth())
-                Spacer(Modifier.height(8.dp))
-                Button(onClick = {
-                    val profile = identity.enrollProfile(listOf(phrase1, phrase2, phrase3))
-                    if (profile.isEnrolled) {
-                        enrolled = true
-                        status = "Enrolled ?"
-                    } else {
-                        status = "Failed � try again"
-                    }
-                }, modifier = Modifier.fillMaxWidth()) {
-                    Text("Enroll Voice")
-                }
-                if (status.isNotBlank()) Text(status, color = MaterialTheme.colorScheme.primary, fontSize = 12.sp)
-            }
         }
+        HorizontalDivider()
+        NavCard(Icons.Filled.AutoAwesome, "Automations", "Study / Sleep / Morning / Work modes", { onNavigate("automation") })
+        NavCard(Icons.Filled.Notifications, "Notifications", "Read your notifications", { onNavigate("notifications") })
+        NavCard(Icons.Filled.History, "Activity Logs", "View all actions", { onNavigate("activity_logs") })
+        NavCard(Icons.Filled.Psychology, "Memory", "Your stored preferences", { onNavigate("memory") })
     }
 }
