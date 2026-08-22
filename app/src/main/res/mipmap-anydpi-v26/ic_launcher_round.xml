@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- Background circle - Dark cyber -->
+    <path
+        android:fillColor="#0A0E1A"
+        android:pathData="M54,54 m-54,0 a54,54 0 1,1 108,0 a54,54 0 1,1 -108,0" />
+    
+    <!-- Hexagon shield - neon green -->
+    <path
+        android:strokeColor="#00E676"
+        android:strokeWidth="3"
+        android:pathData="M54,24 L72,33 L72,51 L54,60 L36,51 L36,33 Z"
+        android:fillColor="#1A1F2E" />
+    
+    <!-- H letter - bold neon green -->
+    <path
+        android:fillColor="#00E676"
+        android:pathData="M44,38 L44,54 L47,54 L47,47 L53,47 L53,54 L56,54 L56,38 L53,38 L53,44 L47,44 L47,38 Z" />
+    
+    <!-- AI text -->
+    <path
+        android:fillColor="#00E676"
+        android:pathData="M59,47 L60.5,51 L62,47 L63.5,47 L61,54 L60,54 L57.5,47 Z" />
+    <path
+        android:fillColor="#00E676"
+        android:pathData="M64,47 L64,54 L65.5,54 L65.5,47 Z" />
+    
+    <!-- Glow effect -->
+    <path
+        android:fillColor="#00E67630"
+        android:pathData="M54,46 m-18,0 a18,18 0 1,1 36,0 a18,18 0 1,1 -36,0" />
+</vector>
