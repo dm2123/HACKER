@@ -1,9 +1,23 @@
 package com.example.hacker.services
 
 import android.accessibilityservice.AccessibilityService
+import android.content.Context
+import android.content.Intent
+import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.service.notification.NotificationListenerService
 import android.service.notification.StatusBarNotification
 import android.service.voice.VoiceInteractionService
+import android.service.voice.VoiceInteractionSession
+import android.service.voice.VoiceInteractionSessionService
+import android.speech.RecognitionListener
+import android.speech.RecognizerIntent
+import android.speech.SpeechRecognizer
+import android.view.Gravity
+import android.view.View
+import android.widget.LinearLayout
+import android.widget.TextView
 import android.view.accessibility.AccessibilityEvent
 
 /**
@@ -15,6 +29,142 @@ import android.view.accessibility.AccessibilityEvent
 class HackerVoiceInteractionService : VoiceInteractionService() {
     override fun onReady() {
         super.onReady()
+    }
+}
+
+/**
+ * Creates a session whenever the assistant is invoked
+ * (long-press home / power / gesture — works from lock screen too).
+ */
+class HackerVoiceInteractionSessionService : VoiceInteractionSessionService() {
+    override fun onNewSession(args: Bundle?): VoiceInteractionSession {
+        return HackerVoiceInteractionSession(this)
+    }
+}
+
+/**
+ * HACKER 7.0 - Working assistant session, Siri-style:
+ * shows an overlay above the lock screen, listens with SpeechRecognizer,
+ * runs the command through CommandProcessor and speaks the reply.
+ */
+class HackerVoiceInteractionSession(context: Context) : VoiceInteractionSession(context) {
+
+    private val handler = Handler(Looper.getMainLooper())
+    private var speaker: com.example.hacker.voice.Speaker? = null
+    private var recognizer: SpeechRecognizer? = null
+    private var statusText: TextView? = null
+
+    override fun onCreateContentView(): View {
+        val density = resources.displayMetrics.density
+        val pad = (20 * density).toInt()
+
+        val layout = LinearLayout(context)
+        layout.orientation = LinearLayout.VERTICAL
+        layout.setBackgroundColor(0xEE101820.toInt())
+        layout.setPadding(pad, pad, pad, pad)
+
+        val title = TextView(context)
+        title.text = "HACKER"
+        title.setTextColor(0xFF00E676.toInt())
+        title.textSize = 22f
+        layout.addView(title)
+
+        val status = TextView(context)
+        status.text = "Sun raha hoon... bolo kya karna hai"
+        status.setTextColor(0xFFE0E0E0.toInt())
+        status.textSize = 16f
+        status.setPadding(0, pad / 2, 0, 0)
+        layout.addView(status)
+
+        statusText = status
+        return layout
+    }
+
+    override fun onShow(args: Bundle?, showFlags: Int) {
+        super.onShow(args, showFlags)
+        if (speaker == null) {
+            speaker = com.example.hacker.voice.Speaker(context)
+        }
+        startListening()
+    }
+
+    override fun onHide() {
+        super.onHide()
+        stopListening()
+    }
+
+    override fun onDestroy() {
+        stopListening()
+        speaker?.shutdown()
+        speaker = null
+        super.onDestroy()
+    }
+
+    private fun setStatus(text: String) {
+        statusText?.text = text
+    }
+
+    private fun startListening() {
+        if (!SpeechRecognizer.isRecognitionAvailable(context)) {
+            finishWith("Speech recognition available nahi hai.")
+            return
+        }
+        stopListening()
+        recognizer = SpeechRecognizer.createSpeechRecognizer(context)
+        recognizer?.setRecognitionListener(object : RecognitionListener {
+            override fun onReadyForSpeech(params: Bundle?) {
+                setStatus("Bolo...")
+            }
+            override fun onBeginningOfSpeech() {}
+            override fun onRmsChanged(rmsdB: Float) {}
+            override fun onBufferReceived(buffer: ByteArray?) {}
+            override fun onEndOfSpeech() {
+                setStatus("Samajh raha hoon...")
+            }
+            override fun onError(error: Int) {
+                finishWith("Maaf kijiye, dobara try kijiye.")
+            }
+            override fun onResults(results: Bundle?) {
+                val heard = results
+                    ?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)
+                    ?.firstOrNull()
+                if (heard.isNullOrBlank()) {
+                    finishWith("Kuch sunayi nahi diya.")
+                } else {
+                    val reply = com.example.hacker.voice.CommandProcessor.handle(
+                        context.applicationContext,
+                        heard
+                    )
+                    finishWith(reply)
+                }
+            }
+            override fun onPartialResults(partialResults: Bundle?) {}
+            override fun onEvent(eventType: Int, params: Bundle?) {}
+        })
+        val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH)
+        intent.putExtra(
+            RecognizerIntent.EXTRA_LANGUAGE_MODEL,
+            RecognizerIntent.LANGUAGE_MODEL_FREE_FORM
+        )
+        intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, "hi-IN")
+        recognizer?.startListening(intent)
+    }
+
+    private fun stopListening() {
+        try {
+            recognizer?.stopListening()
+            recognizer?.destroy()
+        } catch (_: Exception) {
+        }
+        recognizer = null
+    }
+
+    private fun finishWith(message: String) {
+        setStatus(message)
+        speaker?.speak(message)
+        handler.postDelayed({
+            hide()
+        }, 5000)
     }
 }
 

@@ -33,11 +33,19 @@
         <service
             android:name=".services.HackerVoiceInteractionService"
             android:permission="android.permission.BIND_VOICE_INTERACTION"
-            android:exported="false">
+            android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.VOICE_INTERACTION" />
             </intent-filter>
+            <meta-data
+                android:name="android.voice_interaction"
+                android:resource="@xml/voice_interaction_service" />
         </service>
+
+        <service
+            android:name=".services.HackerVoiceInteractionSessionService"
+            android:permission="android.permission.BIND_VOICE_INTERACTION"
+            android:exported="false" />
 
         <service
             android:name=".services.HackerNotificationListenerService"

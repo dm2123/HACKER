@@ -440,12 +440,27 @@ fun PermissionRow(label: String, granted: Boolean, onRequest: () -> Unit) {
 }
 
 fun requestAssistantRole(context: Context) {
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-        val rm = context.getSystemService(Context.ROLE_SERVICE) as android.app.role.RoleManager
-        if (!rm.isRoleHeld(android.app.role.RoleManager.ROLE_ASSISTANT)) {
-            val intent = rm.createRequestRoleIntent(android.app.role.RoleManager.ROLE_ASSISTANT)
-            intent.addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
-            context.startActivity(intent)
+    // Preferred path: Android 10+ RoleManager dialog
+    try {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            val rm = context.getSystemService(Context.ROLE_SERVICE) as? android.app.role.RoleManager
+            if (rm != null && rm.isRoleAvailable(android.app.role.RoleManager.ROLE_ASSISTANT)) {
+                if (!rm.isRoleHeld(android.app.role.RoleManager.ROLE_ASSISTANT)) {
+                    val intent = rm.createRequestRoleIntent(android.app.role.RoleManager.ROLE_ASSISTANT)
+                    intent.addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
+                    context.startActivity(intent)
+                    return
+                }
+            }
         }
+    } catch (_: Exception) {
+        // fall through to settings
+    }
+    // Fallback: open Default Apps > Assistant directly
+    try {
+        val settingsIntent = android.content.Intent(android.provider.Settings.ACTION_VOICE_INPUT_SETTINGS)
+        settingsIntent.addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
+        context.startActivity(settingsIntent)
+    } catch (_: Exception) {
     }
 }
