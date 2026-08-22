@@ -18,6 +18,7 @@ import com.example.hacker.voice.ResponseEngine
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -505,10 +506,22 @@ object CommandProcessor {
                         }
                         "समझ गया — $plan। पूरा प्लान मेमोरी में सेव कर दिया।"
                     } else {
-                        // 3) UNIVERSAL FALLBACK — jo bhi bola, Google par execute karo
-                        action = "universal_web"
-                        DeviceActions.webSearch(context, text)
-                        "'$text' के लिए Google पर ढूँढ रहा हूँ।"
+                        // 3) LLM FALLBACK — AI se analyze karo (agar API key available ho)
+                        val llmResponse = try {
+                            runBlocking { com.example.hacker.ai.LLMProvider.analyze(context, text) }
+                        } catch (_: Exception) { null }
+
+                        if (llmResponse != null) {
+                            action = "llm_${llmResponse.action}"
+                            // Execute LLM-suggested action
+                            executeLLMAction(context, llmResponse.action, llmResponse.params)
+                            llmResponse.reply
+                        } else {
+                            // 4) UNIVERSAL FALLBACK — jo bhi bola, Google par execute karo
+                            action = "universal_web"
+                            DeviceActions.webSearch(context, text)
+                            "'$text' के लिए Google पर ढूँढ रहा हूँ।"
+                        }
                     }
                 }
             }
@@ -540,6 +553,62 @@ object CommandProcessor {
         for (j in 0..b.length) dp[0][j]=j
         for (i in 1..a.length) for (j in 1..b.length) dp[i][j]= if(a[i-1]==b[j-1]) dp[i-1][j-1] else 1+minOf(dp[i-1][j], dp[i][j-1], dp[i-1][j-1])
         return dp[a.length][b.length]
+    }
+
+    private fun executeLLMAction(context: Context, action: String, params: Map<String, String>) {
+        when (action) {
+            "torch_on" -> DeviceActions.toggleTorch(context)
+            "torch_off" -> DeviceActions.toggleTorch(context)
+            "open_whatsapp" -> DeviceActions.openApp(context, "whatsapp")
+            "open_instagram" -> DeviceActions.openApp(context, "instagram")
+            "open_spotify" -> DeviceActions.openApp(context, "spotify")
+            "open_gmail" -> DeviceActions.openApp(context, "gmail")
+            "open_chrome" -> DeviceActions.openApp(context, "chrome")
+            "open_camera" -> DeviceActions.openCamera(context)
+            "play_music" -> {
+                val song = params["song"] ?: ""
+                if (song.isNotBlank()) DeviceActions.webSearch(context, "$song song")
+                else DeviceActions.openApp(context, "music")
+            }
+            "web_search" -> {
+                val query = params["query"] ?: params["q"] ?: ""
+                DeviceActions.webSearch(context, query)
+            }
+            "call_contact" -> {
+                val name = params["contact"] ?: params["name"] ?: ""
+                DeviceActions.openDialer(context)
+            }
+            "send_message" -> {
+                val contact = params["contact"] ?: ""
+                DeviceActions.openApp(context, "whatsapp")
+            }
+            "set_alarm" -> {
+                val time = params["time"] ?: ""
+                DeviceActions.openApp(context, "clock")
+            }
+            "set_timer" -> {
+                val minutes = params["minutes"] ?: params["duration"] ?: "5"
+                try {
+                    TimerController.start(context, minutes.toInt() * 60)
+                } catch (_: Exception) {
+                    DeviceActions.openApp(context, "clock")
+                }
+            }
+            "volume_up" -> DeviceActions.volumeUp(context)
+            "volume_down" -> DeviceActions.volumeDown(context)
+            "wifi_settings" -> DeviceActions.openWifi(context)
+            "bluetooth_settings" -> DeviceActions.openBluetooth(context)
+            "battery_settings" -> DeviceActions.openApp(context, "settings")
+            "assignment_help" -> {
+                val topic = params["topic"] ?: ""
+                // Delegate to CollegeAI
+            }
+            "code_help" -> {
+                val topic = params["topic"] ?: ""
+                // Delegate to CodingAI
+            }
+            else -> DeviceActions.webSearch(context, action)
+        }
     }
 
     private val mathPattern = Regex("\\d+\\s*[+\\-*/x]\\s*\\d+")

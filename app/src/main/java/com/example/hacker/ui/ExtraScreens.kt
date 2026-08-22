@@ -425,8 +425,18 @@ fun PrivacyScreen() {
         Spacer(Modifier.height(8.dp))
         Button(onClick = { scope.launch { UserPreferences.setLlmEndpoint(ctx, endpoint); UserPreferences.setLlmApiKey(ctx, key); UserPreferences.setLlmModel(ctx, model) } }, modifier = Modifier.fillMaxWidth()) { Text("Save AI Config") }
         Spacer(Modifier.height(12.dp))
+        Text("🚀 LLM Integration Active: Truly unlimited commands — 'kuch bhi bolo' AI samjhega!", color = MaterialTheme.colorScheme.primary, fontSize = 13.sp)
+        Spacer(Modifier.height(8.dp))
+        Text("Gemini setup (free):\n1. https://makersuite.google.com/app/apikey\n2. Create API key\n3. Paste below\n4. Model: gemini-pro\n5. Save", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 11.sp)
+        Spacer(Modifier.height(8.dp))
         var testRes by remember { mutableStateOf("") }
-        Button(onClick = { scope.launch { val r = com.example.hacker.ai.LlmClient.chat(ctx, "Hello HACKER"); testRes = r ?: "No key or no internet (local fallback OK)" } }) { Text("Test LLM") }
+        Button(onClick = { scope.launch { 
+            testRes = "Testing..."
+            val r = try { 
+                com.example.hacker.ai.LLMProvider.analyze(ctx, "torch on karo")?.reply ?: "No API key — offline commands still work" 
+            } catch (e: Exception) { "Error: ${e.message}" }
+            testRes = r
+        } }) { Text("Test LLM (torch on karo)") }
         if (testRes.isNotEmpty()) Text(testRes, color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 12.sp)
     }
 }
