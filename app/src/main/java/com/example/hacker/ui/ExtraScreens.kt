@@ -20,7 +20,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.hacker.data.local.*
+import androidx.compose.ui.graphics.Color
+import com.example.hacker.core.voice.VoiceIdentityManager
 import com.example.hacker.data.preferences.UserPreferences
 import com.example.hacker.data.repository.*
 import com.example.hacker.phone.DeviceActions
@@ -554,7 +555,7 @@ fun VoiceEnrollmentScreen() {
                 Row(Modifier.padding(12.dp)) {
                     Icon(Icons.Filled.CheckCircle, contentDescription = null, tint = Color(0xFF00E676))
                     Spacer(Modifier.width(8.dp))
-                    Text("Enrolled ? — only your 'Hey HACKER' works", color = Color.White, fontSize = 14.sp)
+                    Text("Enrolled ? ï¿½ only your 'Hey HACKER' works", color = Color.White, fontSize = 14.sp)
                 }
             }
             Spacer(Modifier.height(8.dp))
@@ -578,7 +579,7 @@ fun VoiceEnrollmentScreen() {
                         enrolled = true
                         status = "Enrolled ?"
                     } else {
-                        status = "Failed — try again"
+                        status = "Failed ï¿½ try again"
                     }
                 }, modifier = Modifier.fillMaxWidth()) {
                     Text("Enroll Voice")

@@ -13,6 +13,7 @@ import com.example.hacker.phonecontrol.SettingsLauncher
 import com.example.hacker.phonecontrol.SmsController
 import com.example.hacker.phonecontrol.TimerController
 import com.example.hacker.phonecontrol.TorchController
+import com.example.hacker.phonecontrol.VolumeController
 import com.example.hacker.voice.ResponseEngine
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
