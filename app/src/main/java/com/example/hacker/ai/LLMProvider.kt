@@ -31,9 +31,16 @@ object LLMProvider {
         return when {
             endpoint.contains("generativelanguage.googleapis.com") || model.contains("gemini") -> 
                 analyzeGemini(key, model.ifBlank { "gemini-pro" }, userCommand)
-            endpoint.contains("openai") || model.contains("gpt") -> 
-                analyzeOpenAI(key, model.ifBlank { "gpt-3.5-turbo" }, userCommand)
-            else -> null
+            endpoint.contains("openai") || endpoint.contains("api.openai.com") || model.contains("gpt") || model.contains("chatgpt") -> 
+                analyzeOpenAI(key, model.ifBlank { "gpt-4o-mini" }, userCommand)
+            else -> {
+                // Auto-detect based on model name
+                when {
+                    model.contains("gemini", ignoreCase = true) -> analyzeGemini(key, model, userCommand)
+                    model.contains("gpt", ignoreCase = true) -> analyzeOpenAI(key, model, userCommand)
+                    else -> null
+                }
+            }
         }
     }
 

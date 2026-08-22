@@ -427,7 +427,7 @@ fun PrivacyScreen() {
         Spacer(Modifier.height(12.dp))
         Text("🚀 LLM Integration Active: Truly unlimited commands — 'kuch bhi bolo' AI samjhega!", color = MaterialTheme.colorScheme.primary, fontSize = 13.sp)
         Spacer(Modifier.height(8.dp))
-        Text("Gemini setup (free):\n1. https://makersuite.google.com/app/apikey\n2. Create API key\n3. Paste below\n4. Model: gemini-pro\n5. Save", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 11.sp)
+        Text("Option 1 - Gemini (FREE, no credit card):\n• Endpoint: https://generativelanguage.googleapis.com\n• API Key: Get from https://makersuite.google.com/app/apikey\n• Model: gemini-pro\n\nOption 2 - ChatGPT (paid, better quality):\n• Endpoint: https://api.openai.com\n• API Key: Get from https://platform.openai.com/api-keys\n• Model: gpt-4o-mini (cheap) or gpt-4o (best)\n\nKoi bhi ek choose karo!", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 11.sp)
         Spacer(Modifier.height(8.dp))
         var testRes by remember { mutableStateOf("") }
         Button(onClick = { scope.launch { 
