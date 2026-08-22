@@ -175,7 +175,8 @@ fun MemoryScreen() {
 fun SettingsScreen() {
     val ctx = LocalContext.current
     Column(Modifier.fillMaxSize().padding(16.dp).verticalScroll(rememberScrollState())) {
-        Text("Tools", color = MaterialTheme.colorScheme.primary, fontSize = 20.sp)
+        Text("Settings", color = MaterialTheme.colorScheme.primary, fontSize = 20.sp)
+        Spacer(Modifier.height(12.dp))
         Text("All phone control tools (spec 8)", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 12.sp)
         Spacer(Modifier.height(12.dp))
         val tools = listOf(
