@@ -583,11 +583,18 @@ fun openAssistantSettings(context: Context) {
 
 fun isHackerEligible(context: Context): Boolean {
     return try {
-        val pm = context.packageManager
-        // Check if our VoiceInteractionService is resolvable
-        val intent = Intent("android.service.voice.VoiceInteractionService")
-        intent.setPackage(context.packageName)
-        val services = pm.queryIntentServices(intent, PackageManager.MATCH_DEFAULT_ONLY)
-        services.any { it.serviceInfo.name.contains("HackerVoiceInteractionService") }
-    } catch (_: Exception) { false }
+        val info = context.packageManager.getServiceInfo(
+            android.content.ComponentName(context, com.example.hacker.services.HackerVoiceInteractionService::class.java),
+            PackageManager.GET_META_DATA
+        )
+        info.enabled && info.metaData?.getInt("android.voice_interaction") != 0
+    } catch (_: Exception) {
+        try {
+            val info = context.packageManager.getServiceInfo(
+                android.content.ComponentName(context.packageName, "com.example.hacker.services.HackerVoiceInteractionService"),
+                0
+            )
+            info.enabled
+        } catch (_: Exception) { false }
+    }
 }
