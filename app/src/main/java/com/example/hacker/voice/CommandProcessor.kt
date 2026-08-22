@@ -251,6 +251,33 @@ object CommandProcessor {
                 else "गणना समझ नहीं आई, ऐसे बोलो — 5 into 3।"
             }
 
+            lower.contains("assignment") || lower.contains("notes") || lower.contains("नोट्स") ||
+                lower.contains("viva") || lower.contains("exam") || lower.contains("practical") || lower.contains("study plan") -> {
+                action = "college_ai"
+                com.example.hacker.college.CollegeAI.handle(context, text)
+            }
+
+            lower.contains("code ") || lower.contains("coding") || lower.contains("python") || lower.contains("java") ||
+                lower.contains("kotlin") || lower.contains("debug") || lower.contains("generate code") || lower.contains("explain code") -> {
+                action = "coding_ai"
+                com.example.hacker.coding.CodingAI.handle(context, text)
+            }
+
+            lower.contains("pdf") || lower.contains("document analysis") || lower.contains("image analysis") || lower.contains("ocr") -> {
+                action = "vision_ai"
+                com.example.hacker.vision.VisionAI.handle(context, text)
+            }
+
+            lower.contains("pair device") || lower.contains("pc par") || lower.contains("device list") || lower.contains("revoke device") -> {
+                action = "devices"
+                com.example.hacker.devices.DeviceHub.handle(context, text)
+            }
+
+            lower.contains("skill") || lower.contains("adaptive") || lower.contains("suggestion") -> {
+                action = "skills"
+                com.example.hacker.skills.SkillManager.handle(context, text)
+            }
+
             else -> {
                 // 1) fuzzy app open
                 val fuzzy = fuzzyAppMatch(context, lower)
