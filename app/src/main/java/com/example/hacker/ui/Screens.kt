@@ -361,14 +361,58 @@ fun SettingsScreen(onNavigate: (String)->Unit = {}) {
     fun granted(perm: String): Boolean =
         ContextCompat.checkSelfPermission(ctx, perm) == PackageManager.PERMISSION_GRANTED
 
+    // Assistant status check (updates when screen opens)
+    var isAssistant by remember { mutableStateOf(false) }
+    androidx.compose.runtime.LaunchedEffect(Unit) {
+        isAssistant = try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                val rm = ctx.getSystemService(Context.ROLE_SERVICE) as? android.app.role.RoleManager
+                rm?.isRoleHeld(android.app.role.RoleManager.ROLE_ASSISTANT) == true
+            } else false
+        } catch (_: Exception) { false }
+    }
+
     androidx.compose.foundation.lazy.LazyColumn(modifier = Modifier.fillMaxSize().padding(16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
         item {
             Text("Assistant", color = MaterialTheme.colorScheme.primary, fontSize = 20.sp)
             Spacer(modifier = Modifier.height(8.dp))
-            Button(onClick = { requestAssistantRole(ctx) }, modifier = Modifier.fillMaxWidth()) {
-                Text("Set HACKER as Assistant (Lock Screen)")
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(
+                    containerColor = if (isAssistant) Color(0xFF1B5E20) else MaterialTheme.colorScheme.surfaceVariant
+                )
+            ) {
+                Row(Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        if (isAssistant) Icons.Filled.CheckCircle else Icons.Filled.Info,
+                        null,
+                        tint = if (isAssistant) Color(0xFF00E676) else Color.Gray
+                    )
+                    Spacer(Modifier.width(8.dp))
+                    Text(
+                        if (isAssistant) "Status: HACKER is Default Assistant ✓" else "Status: Not Active — tap button below",
+                        color = if (isAssistant) Color.White else MaterialTheme.colorScheme.onSurface,
+                        fontSize = 13.sp
+                    )
+                }
             }
-            Text("Lock screen par bhi — power button / swipe se HACKER (spec 16).", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 11.sp)
+            Spacer(modifier = Modifier.height(8.dp))
+            Button(onClick = { requestAssistantRole(ctx) }, modifier = Modifier.fillMaxWidth()) {
+                Text(if (isAssistant) "Change Assistant / Open Settings" else "Set HACKER as Assistant (Lock Screen)")
+            }
+            OutlinedButton(
+                onClick = {
+                    try {
+                        val i = Intent(android.provider.Settings.ACTION_VOICE_INPUT_SETTINGS)
+                        i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                        ctx.startActivity(i)
+                    } catch (_: Exception) {}
+                },
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text("Open Assistant Settings Manually")
+            }
+            Text("Lock screen par bhi — power button / swipe se HACKER (spec 16). Tip: Xiaomi/Realme me Security app → Autostart me HACKER enable karo.", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 11.sp)
             Spacer(Modifier.height(12.dp))
             Text("Quick Settings", color = MaterialTheme.colorScheme.primary, fontSize = 16.sp)
         }
