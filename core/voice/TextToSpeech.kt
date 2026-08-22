@@ -1,78 +1,69 @@
 package com.example.hacker.core.voice
 
-import android.speech.tts.TextToSpeech
 import android.content.Context
+import android.os.Bundle
+import android.speech.tts.TextToSpeech
 import java.util.Locale
 import com.example.hacker.core.logging.HackerLogger
 
-/** Text-to-Speech conversion for HACKER responses */
-class TextToSpeechWrapper(private val context: Context) : TextToSpeech(context, object : TextToSpeech.OnInitListener {
-    override fun onInit(status: Int) {
-        if (status == TextToSpeech.SUCCESS) {
-            // Set default language (Hinglish/English support)
-            val result = setLanguage(Locale.ENGLISH)
-            if (result == TextToSpeech.LANG_MISSING_DATA || result == TextToSpeech.LANG_NOT_SUPPORTED) {
-                setLanguage(Locale.forLanguageTag("en-IN"))
+/** Text-to-Speech wrapper with Hindi/English support */
+class TextToSpeechWrapper(private val context: Context) {
+
+    private val logger = HackerLogger()
+    private var tts: TextToSpeech? = null
+    private var isReady = false
+    private var pendingText: String? = null
+    private var pendingLang: String? = null
+
+    init {
+        tts = TextToSpeech(context) { status ->
+            if (status == TextToSpeech.SUCCESS) {
+                isReady = true
+                // Default to English, fallback to en-IN
+                val res = tts?.setLanguage(Locale.ENGLISH) ?: TextToSpeech.LANG_NOT_SUPPORTED
+                if (res == TextToSpeech.LANG_MISSING_DATA || res == TextToSpeech.LANG_NOT_SUPPORTED) {
+                    tts?.setLanguage(Locale.forLanguageTag("en-IN"))
+                }
+                pendingText?.let { speakText(it, pendingLang ?: "en"); pendingText = null }
+            } else {
+                logger.e("TTS", "Init failed: $status")
             }
         }
     }
-}) {
 
-    private val logger = HackerLogger()
-    private var isSpeaking = false
-
-    /** Speak text with given language */
+    /** Speak text with given language (en/hi/hinglish) */
     fun speakText(text: String, language: String = "en") {
-        if (isSpeaking) {
-            stopSpeaking()
+        if (text.isBlank()) return
+        if (!isReady) {
+            pendingText = text
+            pendingLang = language
+            return
         }
-
-        isSpeaking = true
-        val langs = when (language) {
-            "en" -> Locale.ENGLISH
-            "hi" -> Locale.forLanguageTag("hi-IN")
-            "hi-IN" -> Locale.forLanguageTag("hi-IN")
-            "en-IN" -> Locale.forLanguageTag("en-IN")
+        val locale = when (language.lowercase()) {
+            "hi", "hi-in", "hinglish" -> Locale.forLanguageTag("hi-IN")
+            "en-in" -> Locale.forLanguageTag("en-IN")
             else -> Locale.ENGLISH
         }
-
-        val ttsResult = setLanguage(langs)
-        if (ttsResult == TextToSpeech.LANG_AVAILABLE || ttsResult == TextToSpeech.LARN_MISSING_DATA) {
-            // Set speech rate and pitch
-            setSpeechRate(1.0f)
-            setPitch(1.0f)
-
-            // Speak the text
-            speak(text, android.speech.tts.TextToSpeech.QUEUE_FLUSH, null, null)
-        } else {
-            logger.e("TTS", "Language not available: $language")
-            isSpeaking = false
+        val langResult = tts?.setLanguage(locale) ?: TextToSpeech.LANG_NOT_SUPPORTED
+        if (langResult == TextToSpeech.LANG_MISSING_DATA || langResult == TextToSpeech.LANG_NOT_SUPPORTED) {
+            logger.e("TTS", "Language not available: $language, fallback to EN")
+            tts?.setLanguage(Locale.ENGLISH)
         }
+        tts?.setSpeechRate(1.0f)
+        tts?.setPitch(1.0f)
+        tts?.speak(text, TextToSpeech.QUEUE_FLUSH, null, "hacker_${System.currentTimeMillis()}")
     }
-
-    /** Set speech language */
-    private fun setLanguage(locale: Locale): Int {
-        return setLanguage(locale)
-    }
-
-    /** Get current language result */
-    fun getLanguageResult(): Int = super.onInit(TextToSpeech.SUCCESS)
 
     /** Stop speaking */
     fun stopSpeaking() {
-        if (speechSynthesizer != null && isSpeaking) {
-            speechSynthesizer.stop()
-            isSpeaking = false
-        }
+        try { tts?.stop() } catch (_: Exception) {}
     }
 
-    /** Speak interrupt */
-    fun speak(text: String, queueMode: Int, params: Bundle?, nullParams: String?) {
-        if (text.isNotEmpty() && speechSynthesizer != null) {
-            speechSynthesizer.speak(text, queueMode, params, nullParams)
-        }
-    }
+    fun isSpeaking(): Boolean = try { tts?.isSpeaking == true } catch (_: Exception) { false }
 
-    /** Get current speech engine status */
-    fun isSpeakingStatus(): Boolean = isSpeaking
+    fun shutdown() {
+        try { tts?.shutdown() } catch (_: Exception) {}
+        tts = null
+        isReady = false
+    }
 }

@@ -1,5 +1,9 @@
 package com.example.hacker.core.network
 
+import android.content.Context
+import android.net.ConnectivityManager
+import android.net.NetworkCapabilities
+
 /** Network state and connectivity status */
 enum class NetworkStatus {
     ONLINE,
@@ -8,17 +12,23 @@ enum class NetworkStatus {
     LIMITED
 }
 
-/** Checks network connectivity */
-class NetworkChecker {
-    /** Get current network status */
+/** Checks network connectivity via ConnectivityManager */
+class NetworkChecker(private val context: Context) {
+
     fun getNetworkStatus(): NetworkStatus {
-        // TODO: Implement network check
-        return NetworkStatus.UNKNOWN
+        return try {
+            val cm = context.getSystemService(Context.CONNECTIVITY_SERVICE) as? ConnectivityManager ?: return NetworkStatus.UNKNOWN
+            val network = cm.activeNetwork ?: return NetworkStatus.OFFLINE
+            val caps = cm.getNetworkCapabilities(network) ?: return NetworkStatus.OFFLINE
+            when {
+                caps.hasCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED) && caps.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET) -> NetworkStatus.ONLINE
+                caps.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET) -> NetworkStatus.LIMITED
+                else -> NetworkStatus.OFFLINE
+            }
+        } catch (_: Exception) { NetworkStatus.UNKNOWN }
     }
-    
-    /** Check if internet is available */
+
     fun isInternetAvailable(): Boolean {
-        // TODO: Implement internet check
-        return false
+        return getNetworkStatus() == NetworkStatus.ONLINE
     }
 }
