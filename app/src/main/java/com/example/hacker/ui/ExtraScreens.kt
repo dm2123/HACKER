@@ -172,7 +172,7 @@ fun MemoryScreen() {
 
 // ---------- Settings (spec 24) ----------
 @Composable
-fun SettingsScreen() {
+fun SettingsScreen(onNavigate: (String) -> Unit = {}) {
     val ctx = LocalContext.current
     Column(Modifier.fillMaxSize().padding(16.dp).verticalScroll(rememberScrollState())) {
         Text("Settings", color = MaterialTheme.colorScheme.primary, fontSize = 20.sp)
