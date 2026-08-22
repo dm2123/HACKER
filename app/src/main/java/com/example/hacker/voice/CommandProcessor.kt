@@ -224,14 +224,58 @@ object CommandProcessor {
                 if (q.isNotBlank()) "Maps पर $q खोज रहा हूँ।" else "Maps खोल रहा हूँ।"
             }
 
+            lower.startsWith("play ") || lower.contains("चलाओ") || lower.contains("बजाओ") ||
+                lower.contains("गाना") || lower.contains("song") || lower.contains("music") -> {
+                action = "play_music"
+                var q = text.substringAfter("play", "")
+                    .substringAfter("चलाओ", "").substringAfter("बजाओ", "")
+                    .replace("गाना", "").replace("song", "").replace("music", "").trim()
+                if (q.isEmpty()) q = "trending songs"
+                DeviceActions.youtubeSearch(context, q)
+                "YouTube पर चला रहा हूँ: $q"
+            }
+
+            lower.contains("weather") || lower.contains("मौसम") || lower.contains("mausam") -> {
+                action = "weather"
+                val city = text.replace("weather", "").replace("मौसम", "")
+                    .replace("mausam", "").replace("कैसा है", "").trim().ifEmpty { "delhi" }
+                DeviceActions.webSearch(context, "$city weather")
+                "$city का मौसम दिखा रहा हूँ।"
+            }
+
+            mathPattern.containsMatchIn(lower) || lower.contains("plus") || lower.contains("minus") ||
+                lower.contains("into ") || lower.contains("multiply") || lower.contains("divide") -> {
+                action = "math"
+                val answer = evaluateMath(lower)
+                if (answer != null) "जवाब है $answer।"
+                else "गणना समझ नहीं आई, ऐसे बोलो — 5 into 3।"
+            }
+
             else -> {
-                // fuzzy app open: if text is single word maybe app name
+                // 1) fuzzy app open
                 val fuzzy = fuzzyAppMatch(context, lower)
                 if (fuzzy != null) {
                     action = "open_app_fuzzy"
                     com.example.hacker.phonecontrol.AppLauncher.open(context, fuzzy)
-                    "$fuzzy खोल रहा हूँ (fuzzy match) — अगली बार 'open $fuzzy' बोलो।"
-                } else "कमांड समझ नहीं आई: '$text'। कोशिश करो — time, battery, torch, call मम्मी, open whatsapp, wifi, alarm 6, study mode, notifications batao, yaad rakh <baat>।"
+                    "$fuzzy खोल रहा हूँ।"
+                } else {
+                    // 2) HACKER 5.0 goal engine — study/assignment/coding/exam/project plans
+                    val goal = com.example.hacker.utils.GoalParser.parse(text)
+                    if (goal.intent != com.example.hacker.utils.GoalIntent.UNKNOWN) {
+                        action = "goal_plan"
+                        val wf = com.example.hacker.utils.WorkflowBuilder.build(goal)
+                        val plan = wf.steps.drop(1).joinToString("; ") { it.description }
+                        kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.IO).launch {
+                            try { com.example.hacker.data.repository.MemoryRepository(context).add("goal", text) } catch (_: Exception) {}
+                        }
+                        "समझ गया — $plan। पूरा प्लान मेमोरी में सेव कर दिया।"
+                    } else {
+                        // 3) UNIVERSAL FALLBACK — jo bhi bola, Google par execute karo
+                        action = "universal_web"
+                        DeviceActions.webSearch(context, text)
+                        "'$text' के लिए Google पर ढूँढ रहा हूँ।"
+                    }
+                }
             }
         }
 
@@ -261,6 +305,26 @@ object CommandProcessor {
         for (j in 0..b.length) dp[0][j]=j
         for (i in 1..a.length) for (j in 1..b.length) dp[i][j]= if(a[i-1]==b[j-1]) dp[i-1][j-1] else 1+minOf(dp[i-1][j], dp[i][j-1], dp[i-1][j-1])
         return dp[a.length][b.length]
+    }
+
+    private val mathPattern = Regex("\\d+\\s*[+\\-*/x]\\s*\\d+")
+
+    private fun evaluateMath(lower: String): Double? {
+        return try {
+            val m = Regex("(-?\\d+(?:\\.\\d+)?)\\s*(plus|minus|into|multiplied by|multiply|divided by|divide|[+\\-*/x])\\s*(-?\\d+(?:\\.\\d+)?)").find(lower)
+                ?: return null
+            val a = m.groupValues[1].toDoubleOrNull() ?: return null
+            val b = m.groupValues[3].toDoubleOrNull() ?: return null
+            when (m.groupValues[2].trim()) {
+                "plus", "+" -> a + b
+                "minus", "-" -> a - b
+                "into", "multiplied by", "multiply", "*", "x" -> a * b
+                "divided by", "divide", "/" -> if (b == 0.0) null else a / b
+                else -> null
+            }
+        } catch (_: Exception) {
+            null
+        }
     }
 
     private fun extractHour(lower: String): Int {
