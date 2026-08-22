@@ -401,18 +401,22 @@ fun SettingsScreen(onNavigate: (String)->Unit = {}) {
                 Text(if (isAssistant) "Change Assistant / Open Settings" else "Set HACKER as Assistant (Lock Screen)")
             }
             OutlinedButton(
-                onClick = {
-                    try {
-                        val i = Intent(android.provider.Settings.ACTION_VOICE_INPUT_SETTINGS)
-                        i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                        ctx.startActivity(i)
-                    } catch (_: Exception) {}
-                },
+                onClick = { openAssistantSettings(ctx) },
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Text("Open Assistant Settings Manually")
             }
-            Text("Lock screen par bhi — power button / swipe se HACKER (spec 16). Tip: Xiaomi/Realme me Security app → Autostart me HACKER enable karo.", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 11.sp)
+            OutlinedButton(
+                onClick = {
+                    val eligible = isHackerEligible(ctx)
+                    val msg = if (eligible) "HACKER eligible ✓ — list me dikhna chahiye" else "HACKER NOT eligible — manifest/service error"
+                    android.widget.Toast.makeText(ctx, msg, android.widget.Toast.LENGTH_LONG).show()
+                },
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text("Check Eligibility (Diagnostic)")
+            }
+            Text("Lock screen par bhi — power button / swipe se HACKER (spec 16). Tip: Xiaomi/Realme me Security app → Autostart + Battery unrestricted karo. Agar list me na aaye to 'Check Eligibility' dabao.", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 11.sp)
             Spacer(Modifier.height(12.dp))
             Text("Quick Settings", color = MaterialTheme.colorScheme.primary, fontSize = 16.sp)
         }
@@ -439,9 +443,9 @@ fun SettingsScreen(onNavigate: (String)->Unit = {}) {
             PermissionRow("SMS (SEND_SMS)", granted(Manifest.permission.SEND_SMS)) { requester(arrayOf(Manifest.permission.SEND_SMS)) }
             PermissionRow("Contacts (READ_CONTACTS)", granted(Manifest.permission.READ_CONTACTS)) { requester(arrayOf(Manifest.permission.READ_CONTACTS)) }
             Spacer(Modifier.height(12.dp))
-            Button(onClick = { speaker.speak("नमस्ते, मैं HACKER हूँ। सब काम चालू है।") }, modifier = Modifier.fillMaxWidth()) { Text("Test Voice") }
+            Button(onClick = { speaker.speak("नमस्ते, मैं HACKER हूँ। अब जो भी बोलोगे execute होगा — play gaana, mausam, 5 into 3, ya koi bhi sawal Google par.") }, modifier = Modifier.fillMaxWidth()) { Text("Test Voice") }
             Spacer(Modifier.height(8.dp))
-            Text("HACKER v1.0 • Commands: time, date, battery, torch, call <name>, open <app>, wifi, bluetooth, youtube <q>, search <q>, volume, alarm, timer, study mode, notifications batao", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 11.sp)
+            Text("HACKER v1.0 • UNLIMITED commands: torch, call, open <app>, wifi, youtube <q>, play <song>, weather <city>, 5 into 3, study plan, ya kuch bhi — sab Google/search ya action se execute hoga. Assistant list me HACKER na aaye to 'Check Eligibility' use karo.", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 11.sp)
         }
     }
 }
@@ -499,17 +503,43 @@ fun requestAssistantRole(context: Context) {
                         context.startActivity(intent)
                     }
                     return
+                } else {
+                    // Already held but user tapped again — show settings for verification
+                    openAssistantSettings(context)
+                    return
                 }
             }
         }
     } catch (_: Exception) {
         // fall through to settings
     }
-    // Fallback: open Default Apps > Digital assistant app directly
-    try {
-        val settingsIntent = android.content.Intent(android.provider.Settings.ACTION_VOICE_INPUT_SETTINGS)
-        settingsIntent.addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
-        context.startActivity(settingsIntent)
-    } catch (_: Exception) {
+    openAssistantSettings(context)
+}
+
+fun openAssistantSettings(context: Context) {
+    // Try multiple OEM-compatible settings screens
+    val candidates = listOf(
+        android.provider.Settings.ACTION_VOICE_INPUT_SETTINGS,
+        "android.settings.MANAGE_DEFAULT_APPS_SETTINGS",
+        android.provider.Settings.ACTION_SETTINGS
+    )
+    for (action in candidates) {
+        try {
+            val i = Intent(action)
+            i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            context.startActivity(i)
+            return
+        } catch (_: Exception) {}
     }
+}
+
+fun isHackerEligible(context: Context): Boolean {
+    return try {
+        val pm = context.packageManager
+        // Check if our VoiceInteractionService is resolvable
+        val intent = Intent("android.service.voice.VoiceInteractionService")
+        intent.setPackage(context.packageName)
+        val services = pm.queryIntentServices(intent, PackageManager.MATCH_DEFAULT_ONLY)
+        services.any { it.serviceInfo.name.contains("HackerVoiceInteractionService") }
+    } catch (_: Exception) { false }
 }
