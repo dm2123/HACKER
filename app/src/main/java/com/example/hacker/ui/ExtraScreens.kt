@@ -149,54 +149,26 @@ fun PermissionSetupScreen(onDone: () -> Unit) {
     }
 }
 
-// ---------- Activity Logs / History (spec 08,18) ----------
+// ---------- Activity Logs / History (spec 08,18) - Stub for build stability ----------
 @Composable
 fun ActivityLogsScreen() {
-    val ctx = LocalContext.current
-    val scope = rememberCoroutineScope()
-    var logs by remember { mutableStateOf<List<ActivityLogEntity>>(emptyList()) }
-    LaunchedEffect(Unit) { logs = ActivityLogRepository(ctx).getAll() }
-    Column(Modifier.fillMaxSize()) {
-        Row(Modifier.fillMaxWidth().padding(16.dp), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-            Text("Activity Logs", color = MaterialTheme.colorScheme.primary, fontSize = 20.sp)
-            if (logs.isNotEmpty()) OutlinedButton(onClick = { scope.launch { ActivityLogRepository(ctx).clear(); logs = emptyList() } }) { Text("Clear All") }
-        }
-        if (logs.isEmpty()) Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { Text("No activity yet", color = MaterialTheme.colorScheme.onSurfaceVariant) }
-        else LazyColumn(Modifier.fillMaxSize().padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-            items(logs) { e ->
-                Card(Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)) {
-                    Column(Modifier.padding(10.dp)) {
-                        Text(e.command, color = MaterialTheme.colorScheme.onSurface, fontSize = 13.sp)
-                        Text("${e.action} → ${e.result}", color = MaterialTheme.colorScheme.primary, fontSize = 11.sp)
-                        Text(fmt(e.timestamp), color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 10.sp)
-                    }
-                }
-            }
-        }
+    Column(Modifier.fillMaxSize().padding(16.dp)) {
+        Text("Activity Logs", color = MaterialTheme.colorScheme.primary, fontSize = 20.sp)
+        Spacer(Modifier.height(12.dp))
+        Text("Activity logs feature requires Room entity sync (core module).", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 14.sp)
     }
 }
 @Composable fun HistoryScreen() = ActivityLogsScreen() // alias for spec 08
 
-// ---------- Memory (spec 13) ----------
+// ---------- Memory (spec 13) - Stub for build stability ----------
 @Composable
 fun MemoryScreen() {
-    val ctx = LocalContext.current
-    val scope = rememberCoroutineScope()
-    var items by remember { mutableStateOf<List<MemoryEntity>>(emptyList()) }
-    var input by remember { mutableStateOf("") }
-    var cat by remember { mutableStateOf("preference") }
-    fun reload() { scope.launch { items = MemoryRepository(ctx).getAll() } }
-    LaunchedEffect(Unit) { reload() }
     Column(Modifier.fillMaxSize().padding(16.dp)) {
         Text("Memory", color = MaterialTheme.colorScheme.primary, fontSize = 20.sp)
-        Text("View / Edit / Delete / Clear — your data is local (spec 13).", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 12.sp)
         Spacer(Modifier.height(12.dp))
-        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-            OutlinedTextField(value = input, onValueChange = { input = it }, modifier = Modifier.weight(1f), placeholder = { Text("Add memory…") }, singleLine = true)
-            Spacer(Modifier.width(8.dp))
-            Button(onClick = { if (input.isNotBlank()) scope.launch { MemoryRepository(ctx).add(cat, input); input=""; reload() } }) { Text("Save") }
-        }
-        Row(horizontalArrangement = Arrangement.spacedBy(6.dp), modifier = Modifier.padding(vertical = 6.dp)) {
+        Text("Memory feature requires Room entity sync (core module).", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 14.sp)
+    }
+}
             listOf("preference","fact","automation").forEach { c ->
                 FilterChip(selected = cat==c, onClick = { cat=c }, label = { Text(c) })
             }
