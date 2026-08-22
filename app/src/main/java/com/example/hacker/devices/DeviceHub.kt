@@ -1,8 +1,6 @@
 package com.example.hacker.devices
 
 import android.content.Context
-import com.example.hacker.utils.DevicePairing
-import com.example.hacker.utils.DeviceType
 
 /**
  * HACKER 6.0 — Multi-device hub (spec section 23-26)

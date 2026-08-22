@@ -40,13 +40,10 @@ object SkillManager {
                 "Skill $name install karne ke liye permission review → sandbox test → user approval chahiye. Abhi built-in skills ready hain."
             }
             lower.contains("adaptive") || lower.contains("suggestion") -> {
-                // Use AdaptiveEngine
                 val suggestion = try {
-                    com.example.hacker.utils.AdaptiveEngine.generateSuggestion(
-                        com.example.hacker.utils.AdaptiveEngine.getPreferences(context)
-                    )
+                    com.example.hacker.utils.AdaptiveEngine.generateSuggestion("adaptive_check")
                 } catch (_: Exception) { null }
-                if (suggestion != null) "Adaptive suggestion: ${suggestion.title} — ${suggestion.reason}"
+                if (suggestion != null) "Adaptive suggestion: $suggestion"
                 else "Boss, aap har Monday project planning karte ho — isko routine save karun? (Adaptive HACKER)"
             }
             else -> "Skills: 'skill list dikhao', 'adaptive suggestion', bolo."
