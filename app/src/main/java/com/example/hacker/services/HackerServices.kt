@@ -55,7 +55,7 @@ class HackerVoiceInteractionSession(context: Context) : VoiceInteractionSession(
     private var statusText: TextView? = null
 
     override fun onCreateContentView(): View {
-        val density = resources.displayMetrics.density
+        val density = context.resources.displayMetrics.density
         val pad = (20 * density).toInt()
 
         val layout = LinearLayout(context)
