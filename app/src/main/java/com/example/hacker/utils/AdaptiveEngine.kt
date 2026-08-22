@@ -42,7 +42,7 @@ object AdaptiveEngine {
                 continue
             }
             seen.add(action)
-            val frequency = countOccurrences(recentActions, action)
+            val frequency = recentActions.count { item -> item == action }
             if (frequency >= 3) {
                 val confidence = if (frequency > 100) 1.0f else frequency / 100.0f
                 patterns.add(
