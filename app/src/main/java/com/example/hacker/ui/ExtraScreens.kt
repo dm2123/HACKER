@@ -169,31 +169,10 @@ fun MemoryScreen() {
         Text("Memory feature requires Room entity sync (core module).", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 14.sp)
     }
 }
-            listOf("preference","fact","automation").forEach { c ->
-                FilterChip(selected = cat==c, onClick = { cat=c }, label = { Text(c) })
-            }
-        }
-        if (items.isEmpty()) Box(Modifier.fillMaxWidth().padding(24.dp), contentAlignment = Alignment.Center) { Text("No memories", color = MaterialTheme.colorScheme.onSurfaceVariant) }
-        LazyColumn(verticalArrangement = Arrangement.spacedBy(6.dp), modifier = Modifier.weight(1f)) {
-            items(items) { m ->
-                Card(Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)) {
-                    Row(Modifier.padding(10.dp), verticalAlignment = Alignment.CenterVertically) {
-                        Column(Modifier.weight(1f)) {
-                            Text(m.content, color = MaterialTheme.colorScheme.onSurface, fontSize = 13.sp)
-                            Text("${m.category} • ${fmt(m.createdAt)}", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 10.sp)
-                        }
-                        IconButton(onClick = { scope.launch { MemoryRepository(ctx).delete(m); reload() } }) { Icon(Icons.Filled.Delete, null, tint = MaterialTheme.colorScheme.error) }
-                    }
-                }
-            }
-        }
-        if (items.isNotEmpty()) OutlinedButton(onClick = { scope.launch { MemoryRepository(ctx).clear(); reload() } }, modifier = Modifier.fillMaxWidth()) { Text("Clear All Memories") }
-    }
-}
 
-// ---------- Tools / Phone Control (spec 10,12) ----------
+// ---------- Settings (spec 24) ----------
 @Composable
-fun ToolsScreen(onNavigate: (String)->Unit = {}) {
+fun SettingsScreen() {
     val ctx = LocalContext.current
     Column(Modifier.fillMaxSize().padding(16.dp).verticalScroll(rememberScrollState())) {
         Text("Tools", color = MaterialTheme.colorScheme.primary, fontSize = 20.sp)
