@@ -170,4 +170,32 @@ object DeviceActions {
             0
         )
     }
+
+    fun openCamera(context: Context) {
+        val intent = Intent(android.provider.MediaStore.ACTION_IMAGE_CAPTURE)
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        try { context.startActivity(intent) } catch (_: Exception) {
+            openApp(context, "camera")
+        }
+    }
+
+    fun copyToClipboard(context: Context, text: String) {
+        val cm = context.getSystemService(Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
+        cm.setPrimaryClip(android.content.ClipData.newPlainText("hacker", text))
+    }
+
+    fun clipboardText(context: Context): String {
+        val cm = context.getSystemService(Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
+        return cm.primaryClip?.getItemAt(0)?.coerceToText(context)?.toString() ?: ""
+    }
+
+    fun openCalendar(context: Context) {
+        val intent = Intent(Intent.ACTION_MAIN).apply {
+            addCategory(Intent.CATEGORY_APP_CALENDAR)
+            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        }
+        try { context.startActivity(intent) } catch (_: Exception) {
+            openApp(context, "calendar")
+        }
+    }
 }

@@ -163,6 +163,24 @@ fun HomeScreen(onNavigate: (String)->Unit = {}) {
                 DeviceActions.openApp(ctx, "youtube")
             }
         }
+        Spacer(modifier = Modifier.height(8.dp))
+        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            QuickButton(icon = Icons.Filled.CameraAlt, label = "Camera") {
+                DeviceActions.openCamera(ctx)
+            }
+            QuickButton(icon = Icons.Filled.ContentCopy, label = "Clipboard") {
+                val txt = DeviceActions.clipboardText(ctx)
+                if (txt.isNotBlank()) {
+                    // show toast
+                    android.widget.Toast.makeText(ctx, "Clipboard: ${txt.take(30)}", android.widget.Toast.LENGTH_SHORT).show()
+                } else {
+                    android.widget.Toast.makeText(ctx, "Clipboard empty", android.widget.Toast.LENGTH_SHORT).show()
+                }
+            }
+            QuickButton(icon = Icons.Filled.CalendarMonth, label = "Calendar") {
+                DeviceActions.openCalendar(ctx)
+            }
+        }
         Spacer(modifier = Modifier.height(16.dp))
         androidx.compose.foundation.layout.Column {
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {

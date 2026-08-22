@@ -534,3 +534,57 @@ fun PrivacyScreen() {
         Text("Definition of Done (spec 31): voice reliable, intent routing stable, permissions explained, memory user-controlled, offline fallback, no PIN bypass.", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 11.sp)
     }
 }
+@Composable
+fun VoiceEnrollmentScreen() {
+    val ctx = LocalContext.current
+    val scope = rememberCoroutineScope()
+    val identity = com.example.hacker.core.voice.VoiceIdentityManager()
+    var enrolled by remember { mutableStateOf(false) }
+    var status by remember { mutableStateOf("") }
+    LaunchedEffect(Unit) {
+        enrolled = identity.getStoredProfile()?.isEnrolled == true
+    }
+    Column(Modifier.fillMaxSize().padding(16.dp).verticalScroll(rememberScrollState())) {
+        Text("Voice Enrollment", color = MaterialTheme.colorScheme.primary, fontSize = 20.sp)
+        Spacer(Modifier.height(8.dp))
+        Text("Say 'Hey HACKER' 3 times so only you can wake HACKER.", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 12.sp)
+        Spacer(Modifier.height(12.dp))
+        if (enrolled) {
+            Card(modifier = Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = Color(0xFF1B5E20))) {
+                Row(Modifier.padding(12.dp)) {
+                    Icon(Icons.Filled.CheckCircle, contentDescription = null, tint = Color(0xFF00E676))
+                    Spacer(Modifier.width(8.dp))
+                    Text("Enrolled ? — only your 'Hey HACKER' works", color = Color.White, fontSize = 14.sp)
+                }
+            }
+            Spacer(Modifier.height(8.dp))
+            Button(onClick = { scope.launch { identity.clearProfile(); enrolled = false; status = "Cleared" } }, modifier = Modifier.fillMaxWidth()) {
+                Text("Clear Profile")
+            }
+        } else {
+            var phrase1 by remember { mutableStateOf("") }
+            var phrase2 by remember { mutableStateOf("") }
+            var phrase3 by remember { mutableStateOf("") }
+            Column(Modifier.fillMaxWidth()) {
+                OutlinedTextField(value = phrase1, onValueChange = { phrase1 = it }, label = { Text("Say: Hey HACKER") }, modifier = Modifier.fillMaxWidth())
+                Spacer(Modifier.height(8.dp))
+                OutlinedTextField(value = phrase2, onValueChange = { phrase2 = it }, label = { Text("Say: Hey HACKER") }, modifier = Modifier.fillMaxWidth())
+                Spacer(Modifier.height(8.dp))
+                OutlinedTextField(value = phrase3, onValueChange = { phrase3 = it }, label = { Text("Say: Hey HACKER") }, modifier = Modifier.fillMaxWidth())
+                Spacer(Modifier.height(8.dp))
+                Button(onClick = {
+                    val profile = identity.enrollProfile(listOf(phrase1, phrase2, phrase3))
+                    if (profile.isEnrolled) {
+                        enrolled = true
+                        status = "Enrolled ?"
+                    } else {
+                        status = "Failed — try again"
+                    }
+                }, modifier = Modifier.fillMaxWidth()) {
+                    Text("Enroll Voice")
+                }
+                if (status.isNotBlank()) Text(status, color = MaterialTheme.colorScheme.primary, fontSize = 12.sp)
+            }
+        }
+    }
+}

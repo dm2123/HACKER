@@ -13,7 +13,7 @@ import com.example.hacker.phonecontrol.SettingsLauncher
 import com.example.hacker.phonecontrol.SmsController
 import com.example.hacker.phonecontrol.TimerController
 import com.example.hacker.phonecontrol.TorchController
-import com.example.hacker.phonecontrol.VolumeController
+import com.example.hacker.voice.ResponseEngine
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -216,6 +216,30 @@ object CommandProcessor {
                 "Screenshot के लिए power + volume down दबाओ — या Tools में जाओ।"
             }
 
+            lower.contains("camera") || lower.contains("कैमरा") || lower.contains("photo") || lower.contains("फोटो") -> {
+                action = "camera"
+                DeviceActions.openCamera(context)
+                "Camera खोल रहा हूँ।"
+            }
+
+            lower.contains("clipboard") || lower.contains("क्लिपबोर्ड") || lower.contains("copy") -> {
+                action = "clipboard"
+                val txt = text.substringAfter("clipboard", "").substringAfter("copy", "").trim()
+                if (txt.isNotBlank()) {
+                    DeviceActions.copyToClipboard(context, txt)
+                    "Copy कर दिया।"
+                } else {
+                    val paste = DeviceActions.clipboardText(context)
+                    "Clipboard: $paste"
+                }
+            }
+
+            lower.contains("calendar") || lower.contains("कैलेंडर") || lower.contains("schedule") -> {
+                action = "calendar"
+                DeviceActions.openCalendar(context)
+                "Calendar खोल रहा हूँ।"
+            }
+
             lower.contains("map") || lower.contains("maps") || lower.contains("नक्शा") || lower.contains("लोकेशन") -> {
                 action = "maps"
                 val q = text.substringAfter("map", "").substringAfter("नक्शा", "").trim()
@@ -307,7 +331,7 @@ object CommandProcessor {
         }
 
         ActivityLogRepository(context).log(text, action, response)
-        return response
+        return ResponseEngine.success(response)
     }
 
     private fun fuzzyAppMatch(context: Context, lower: String): String? {
