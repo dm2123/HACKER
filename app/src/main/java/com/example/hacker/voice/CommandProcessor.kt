@@ -241,12 +241,195 @@ object CommandProcessor {
                 "Calendar खोल रहा हूँ।"
             }
 
+            lower.contains("whatsapp") || lower.contains("व्हाट्सएप") -> {
+                action = "whatsapp"
+                val msg = text.substringAfter("whatsapp", "").substringAfter("व्हाट्सएप", "").trim()
+                if (msg.contains("message") || msg.contains("भेजो")) {
+                    val contact = msg.substringBefore("message").substringBefore("भेजो").trim()
+                    if (contact.isNotBlank()) {
+                        DeviceActions.openApp(context, "whatsapp")
+                        "WhatsApp खोल रहा हूँ — $contact को message भेजो।"
+                    } else {
+                        DeviceActions.openApp(context, "whatsapp")
+                        "WhatsApp खोल रहा हूँ।"
+                    }
+                } else {
+                    DeviceActions.openApp(context, "whatsapp")
+                    "WhatsApp खोल रहा हूँ।"
+                }
+            }
+
+            lower.contains("instagram") || lower.contains("insta") || lower.contains("इंस्टाग्राम") -> {
+                action = "instagram"
+                DeviceActions.openApp(context, "instagram")
+                "Instagram खोल रहा हूँ।"
+            }
+
+            lower.contains("facebook") || lower.contains("fb") || lower.contains("फेसबुक") -> {
+                action = "facebook"
+                DeviceActions.openApp(context, "facebook")
+                "Facebook खोल रहा हूँ।"
+            }
+
+            lower.contains("twitter") || lower.contains("x app") || lower.contains("ट्विटर") -> {
+                action = "twitter"
+                DeviceActions.openApp(context, "twitter")
+                "Twitter खोल रहा हूँ।"
+            }
+
+            lower.contains("telegram") || lower.contains("टेलीग्राम") -> {
+                action = "telegram"
+                DeviceActions.openApp(context, "telegram")
+                "Telegram खोल रहा हूँ।"
+            }
+
+            lower.contains("spotify") || lower.contains("स्पॉटिफाई") -> {
+                action = "spotify"
+                val song = text.substringAfter("spotify", "").substringAfter("स्पॉटिफाई", "").trim()
+                DeviceActions.openApp(context, "spotify")
+                if (song.isNotBlank()) "Spotify पर $song खोज रहा हूँ।" else "Spotify खोल रहा हूँ।"
+            }
+
+            lower.contains("gaana") || lower.contains("गाना app") -> {
+                action = "gaana"
+                DeviceActions.openApp(context, "gaana")
+                "Gaana app खोल रहा हूँ।"
+            }
+
+            lower.contains("gmail") || lower.contains("email") || lower.contains("ईमेल") -> {
+                action = "gmail"
+                DeviceActions.openApp(context, "gmail")
+                "Gmail खोल रहा हूँ।"
+            }
+
+            lower.contains("chrome") || lower.contains("browser") || lower.contains("ब्राउज़र") -> {
+                action = "chrome"
+                val url = text.substringAfter("chrome", "").substringAfter("browser", "").trim()
+                if (url.isNotBlank()) DeviceActions.webSearch(context, url)
+                else DeviceActions.openApp(context, "chrome")
+                if (url.isNotBlank()) "Chrome में $url खोल रहा हूँ।" else "Chrome खोल रहा हूँ।"
+            }
+
+            lower.contains("photos") || lower.contains("gallery") || lower.contains("फोटो") && !lower.contains("photo khich") -> {
+                action = "gallery"
+                DeviceActions.openApp(context, "photos")
+                "Gallery खोल रहा हूँ।"
+            }
+
+            lower.contains("settings") || lower.contains("सेटिंग्स") -> {
+                action = "settings"
+                DeviceActions.openApp(context, "settings")
+                "Settings खोल रहा हूँ।"
+            }
+
+            lower.contains("clock") || lower.contains("घड़ी") -> {
+                action = "clock"
+                DeviceActions.openApp(context, "clock")
+                "Clock खोल रहा हूँ।"
+            }
+
+            lower.contains("contacts") || lower.contains("संपर्क") -> {
+                action = "contacts"
+                DeviceActions.openApp(context, "contacts")
+                "Contacts खोल रहा हूँ।"
+            }
+
+            lower.contains("files") || lower.contains("file manager") || lower.contains("फाइल") -> {
+                action = "files"
+                DeviceActions.openApp(context, "files")
+                "File Manager खोल रहा हूँ।"
+            }
+
+            lower.contains("play store") || lower.contains("प्ले स्टोर") -> {
+                action = "playstore"
+                DeviceActions.openApp(context, "play store")
+                "Play Store खोल रहा हूँ।"
+            }
+
             lower.contains("map") || lower.contains("maps") || lower.contains("नक्शा") || lower.contains("लोकेशन") -> {
                 action = "maps"
                 val q = text.substringAfter("map", "").substringAfter("नक्शा", "").trim()
                 if (q.isNotBlank()) DeviceActions.webSearch(context, "$q maps")
                 else DeviceActions.openApp(context, "maps")
                 if (q.isNotBlank()) "Maps पर $q खोज रहा हूँ।" else "Maps खोल रहा हूँ।"
+            }
+
+            lower.contains("rotate") || lower.contains("rotation") || lower.contains("घुमाओ") -> {
+                action = "rotation"
+                DeviceActions.openApp(context, "settings")
+                "Screen rotation settings खोल रहा हूँ।"
+            }
+
+            lower.contains("airplane") || lower.contains("flight mode") || lower.contains("एयरप्लेन") -> {
+                action = "airplane"
+                DeviceActions.openApp(context, "settings")
+                "Airplane mode settings खोल रहा हूँ।"
+            }
+
+            lower.contains("hotspot") || lower.contains("हॉटस्पॉट") -> {
+                action = "hotspot"
+                DeviceActions.openApp(context, "settings")
+                "Hotspot settings खोल रहा हूँ।"
+            }
+
+            lower.contains("mobile data") || lower.contains("data") && !lower.contains("date") -> {
+                action = "mobile_data"
+                DeviceActions.openApp(context, "settings")
+                "Mobile data settings खोल रहा हूँ।"
+            }
+
+            lower.contains("location") || lower.contains("gps") || lower.contains("लोकेशन सेटिंग") -> {
+                action = "location_settings"
+                DeviceActions.openApp(context, "settings")
+                "Location settings खोल रहा हूँ।"
+            }
+
+            lower.contains("sound") || lower.contains("audio") || lower.contains("आवाज़ सेटिंग") -> {
+                action = "sound_settings"
+                DeviceActions.openApp(context, "settings")
+                "Sound settings खोल रहा हूँ।"
+            }
+
+            lower.contains("display") || lower.contains("screen") && lower.contains("setting") -> {
+                action = "display_settings"
+                DeviceActions.openApp(context, "settings")
+                "Display settings खोल रहा हूँ।"
+            }
+
+            lower.contains("apps") && lower.contains("setting") || lower.contains("app info") -> {
+                action = "apps_settings"
+                DeviceActions.openApp(context, "settings")
+                "Apps settings खोल रहा हूँ।"
+            }
+
+            lower.contains("storage") || lower.contains("स्टोरेज") -> {
+                action = "storage"
+                DeviceActions.openApp(context, "settings")
+                "Storage settings खोल रहा हूँ।"
+            }
+
+            lower.contains("security") && !lower.contains("password") || lower.contains("सुरक्षा") -> {
+                action = "security"
+                DeviceActions.openApp(context, "settings")
+                "Security settings खोल रहा हूँ।"
+            }
+
+            lower.contains("language") && lower.contains("setting") || lower.contains("भाषा सेटिंग") -> {
+                action = "language_settings"
+                DeviceActions.openApp(context, "settings")
+                "Language settings खोल रहा हूँ।"
+            }
+
+            lower.contains("battery") && lower.contains("setting") || lower.contains("बैटरी सेटिंग") -> {
+                action = "battery_settings"
+                DeviceActions.openApp(context, "settings")
+                "Battery settings खोल रहा हूँ।"
+            }
+
+            lower.contains("about phone") || lower.contains("phone info") -> {
+                action = "about_phone"
+                DeviceActions.openApp(context, "settings")
+                "About phone खोल रहा हूँ।"
             }
 
             lower.startsWith("play ") || lower.contains("चलाओ") || lower.contains("बजाओ") ||
