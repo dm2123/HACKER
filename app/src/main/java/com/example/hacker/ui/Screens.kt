@@ -417,6 +417,54 @@ fun SettingsScreen(onNavigate: (String)->Unit = {}) {
                 Text("Check Eligibility (Diagnostic)")
             }
             Text("Lock screen par bhi — power button / swipe se HACKER (spec 16). Tip: Xiaomi/Realme me Security app → Autostart + Battery unrestricted karo. Agar list me na aaye to 'Check Eligibility' dabao.", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 11.sp)
+            Spacer(Modifier.height(8.dp))
+            // Hey HACKER hotword — kahin se bhi bina button ke
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+            ) {
+                var hotwordOn by remember {
+                    mutableStateOf(com.example.hacker.services.HackerHotwordService.isEnabled(ctx))
+                }
+                Row(
+                    Modifier.fillMaxWidth().padding(12.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(Modifier.weight(1f)) {
+                        Text("Hey HACKER — hands-free", color = MaterialTheme.colorScheme.onSurface, fontSize = 14.sp)
+                        Text(
+                            if (hotwordOn) "ON — kahin se bhi bolo 'Hey HACKER' + command" else "OFF — button/long-press se hi",
+                            color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 11.sp
+                        )
+                    }
+                    androidx.compose.material3.Switch(
+                        checked = hotwordOn,
+                        onCheckedChange = { enabled ->
+                            // mic permission check
+                            if (enabled && ContextCompat.checkSelfPermission(ctx, android.Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
+                                android.widget.Toast.makeText(ctx, "Mic permission pehle do", android.widget.Toast.LENGTH_SHORT).show()
+                                return@Switch
+                            }
+                            com.example.hacker.services.HackerHotwordService.setEnabled(ctx, enabled)
+                            hotwordOn = enabled
+                            try {
+                                val svc = android.content.Intent(ctx, com.example.hacker.services.HackerHotwordService::class.java)
+                                if (enabled) {
+                                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) ctx.startForegroundService(svc)
+                                    else ctx.startService(svc)
+                                    android.widget.Toast.makeText(ctx, "Hey HACKER ON — bolo 'Hey HACKER torch on karo'", android.widget.Toast.LENGTH_LONG).show()
+                                } else {
+                                    ctx.stopService(svc)
+                                    android.widget.Toast.makeText(ctx, "Hey HACKER OFF", android.widget.Toast.LENGTH_SHORT).show()
+                                }
+                            } catch (e: Exception) {
+                                android.widget.Toast.makeText(ctx, "Error: ${e.message}", android.widget.Toast.LENGTH_SHORT).show()
+                            }
+                        }
+                    )
+                }
+            }
+            Text("Battery note: Hotword background mic use karta hai — zarurat na ho to OFF rakho. Only enrolled speaker ka 'Hey HACKER' hi chalega agar voice enrollment kiya ho.", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 10.sp)
             Spacer(Modifier.height(12.dp))
             Text("Quick Settings", color = MaterialTheme.colorScheme.primary, fontSize = 16.sp)
         }
